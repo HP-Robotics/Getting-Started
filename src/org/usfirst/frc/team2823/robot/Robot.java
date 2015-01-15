@@ -1,5 +1,8 @@
 package org.usfirst.frc.team2823.robot;
 
+import edu.wpi.first.wpilibj.CounterBase.EncodingType;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
@@ -17,7 +20,9 @@ public class Robot extends IterativeRobot {
 	//RobotDrive myRobot;
 	Joystick stick;
 	int autoLoopCounter;
-	Talon myTalon = new Talon(0);
+	Talon myTalon;
+	//Encoder encoder;
+	DigitalInput di;
 	
     /**
      * This function is run when the robot is first started up and should be
@@ -26,6 +31,9 @@ public class Robot extends IterativeRobot {
     public void robotInit() {
     	//myRobot = new RobotDrive(0,1);
     	stick = new Joystick(0);
+    	myTalon  = new Talon(0);
+    	//encoder = new Encoder(0, 1, true, EncodingType.k4X);
+    	di = new DigitalInput(0);
     }
     
     /**
@@ -52,6 +60,7 @@ public class Robot extends IterativeRobot {
      * This function is called once each time the robot enters tele-operated mode
      */
     public void teleopInit(){
+    	//encoder.reset();
     }
 
     /**
@@ -60,6 +69,7 @@ public class Robot extends IterativeRobot {
     public void teleopPeriodic() {
     	double myAxis = stick.getRawAxis(0);
     	myTalon.set(myAxis);
+    	System.out.printf("%b \n", di.get());
     	
         //myRobot.arcadeDrive(stick);
     }
