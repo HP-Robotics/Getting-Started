@@ -18,6 +18,12 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
  * directory.
  */
 public class Robot extends IterativeRobot {
+	static final double R = 2;
+	static final double LEVEL_HEIGHT = 14;
+	static final double ENCODER_RESOLUTION = 2048;
+	static final double ELEVATOR_SPEED = 0.05;
+	static final int MAXIMUM_LEVEL = 4;
+	
 	//RobotDrive myRobot;
 	Joystick stick;
 	int autoLoopCounter;
@@ -31,7 +37,9 @@ public class Robot extends IterativeRobot {
 	Gyro myGyro;
 	int newlevel;
 	int oldlevel;
-	final int R = 2;
+
+	boolean BAMUpPressed = false;
+	boolean BAMDownPressed = false;
     /**
      * This function is run when the robot is first started up and should be
      * used for any initialization code.
@@ -86,27 +94,32 @@ public class Robot extends IterativeRobot {
     	double axis1 = stick.getRawAxis(1);
     	double axis3 = stick.getRawAxis(3);
     	driveRobot(axis1, axis3);
-    	if (stick.getRawButton(6) == true)
-    	{	
-    		setElevatorLevel(newlevel);
-    	}
-    	if(stick.getRawButton(4) == true)
+    	if (stick.getRawButton(6))
     	{
-    		newlevel=1;
-    		
+    		if(!(newlevel >= MAXIMUM_LEVEL) && !BAMUpPressed)
+    		{
+        		newlevel += 1;	
+    		}
+    		BAMUpPressed = true;
     	}
-    	else if(stick.getRawButton(2) == true)
+    	else
     	{
-    		newlevel=2;
+    		BAMUpPressed = false;
     	}
-    	else if(stick.getRawButton(1) == true)
+    	
+    	if (stick.getRawButton(8))
     	{
-    		newlevel=3;
+    		if(!(newlevel <= 1) && !BAMDownPressed)
+    		{
+        		newlevel -= 1;
+    		}
     	}
-    	else if(stick.getRawButton(3) == true)
+    	else
     	{
-    		newlevel=4;
+    		BAMDownPressed = false;
     	}
+    	
+    	updateElevator();
     	
     	//DEBUG
     	//System.out.printf("%f \t %f \n", axis1, axis3);
@@ -131,20 +144,26 @@ public class Robot extends IterativeRobot {
     	talon4.set(-1*b);
     }
     
-    public void setElevatorLevel(int l)
+    public void updateElevator()
     {
-    	try
+    	int difference = newlevel - oldlevel;
+    	if (difference == 0)
     	{
-    		int difference = newlevel - oldlevel;
-    		while(Math.abs(encoder.get()) < Math.abs((difference*14336)/(Math.PI*R)))
-    			{
-    				talon5.set(0.05*(Math.abs(difference)/difference));
-    			}
-    		oldlevel = newlevel;
+    		talon5.set(0);
     	}
-    	catch(Exception e)
+    	else 
     	{
-    		System.out.println("Nice try. You're already on the selected level.");
+    		if (Math.abs(encoder.get()) >= Math.abs((difference*ENCODER_RESOLUTION*LEVEL_HEIGHT)/(2*Math.PI*R)))
+    		{
+    			talon5.set(0);
+    			oldlevel = newlevel;
+    		}
+    		else 
+    		{
+    			talon5.set(ELEVATOR_SPEED*(Math.signum(difference)));
+    		}
+    		
     	}
     }
 }
+  
