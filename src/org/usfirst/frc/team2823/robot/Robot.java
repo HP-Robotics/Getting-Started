@@ -37,9 +37,12 @@ public class Robot extends IterativeRobot {
 	Gyro myGyro;
 	int newlevel;
 	int oldlevel;
+	double motorScale = 0.98;
+	double currentAngle = 0;
 
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
+	boolean StraightMode = false;
     /**
      * This function is run when the robot is first started up and should be
      * used for any initialization code.
@@ -135,13 +138,80 @@ public class Robot extends IterativeRobot {
     	LiveWindow.run();
     }
     
-    public void driveRobot(double a, double b)
+    public void driveRobot(double left, double right)
     {
-    	talon1.set(a);
-    	talon2.set(a);
+    	if(left > 0)
+    	{
+    		left = Math.floor(4*left)/4;
+    	}
+    	else
+    	{
+    		left = Math.ceil(4*left)/4;
+    	}
+    	if(right > 0)
+    	{
+    		right = Math.floor(4*right)/4;
+    	}
+    	else
+    	{
+    		right = Math.ceil(4*right)/4;
+    	}
+
+    	if(Math.abs(left-right) < 0.0001)
+    	{ //we're going straight and we're going to check if this is the beginning of our straight section
+    		if(StraightMode == false)
+    		{
+    			myGyro.reset();
+    			currentAngle = 0;
+    			StraightMode = true;
+    		}
+    		if(myGyro.getAngle() > 0.25) // The robot is veering to the right
+    		{
+    			if(myGyro.getAngle() > currentAngle)
+    			{
+    				currentAngle = myGyro.getAngle();
+    				motorScale -= 0.03; //reduce speed of 
+    			}
+    			if(right < -0.01)
+    			{
+    				left *= motorScale;
+    			}
+    			else
+    			{
+    				right *= motorScale;
+    			}
+    		}
+    		else if(myGyro.getAngle() < -0.25) // The robot is veering to the left
+    		{
+    			if(myGyro.getAngle() < currentAngle)
+    			{
+    				currentAngle = myGyro.getAngle();
+    				motorScale -= 0.03;
+    			}
+    			if(right < -0.01)
+    			{
+    				right *= motorScale;
+    			}
+    			else
+    			{
+    				left *= motorScale;
+    			}
+    		}
+    		else
+    		{
+    			motorScale = 1;
+    		}
+    	}
+    	else
+    	{
+    		StraightMode = false;
+    	}
+
+    	talon1.set(left);
+    	talon2.set(left);
     	// Values are multiplied by -1 to ensure that the motors on the right spin opposite the motors on the left.
-    	talon3.set(-1*b);
-    	talon4.set(-1*b);
+    	talon3.set(-1*right);
+    	talon4.set(-1*right);
     }
     
     public void updateElevator()
@@ -157,12 +227,13 @@ public class Robot extends IterativeRobot {
     		{
     			talon5.set(0);
     			oldlevel = newlevel;
+    			encoder.reset();
     		}
     		else 
     		{
     			talon5.set(ELEVATOR_SPEED*(Math.signum(difference)));
     		}
-    		
+    		   
     	}
     }
 }
