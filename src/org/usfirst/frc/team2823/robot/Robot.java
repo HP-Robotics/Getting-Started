@@ -1,6 +1,8 @@
 package org.usfirst.frc.team2823.robot;
 
+import edu.wpi.first.wpilibj.AnalogAccelerometer;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
@@ -9,6 +11,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.interfaces.Accelerometer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 
 /**
@@ -34,14 +37,19 @@ public class Robot extends IterativeRobot {
 	Talon talon4;
 	Talon talon5;
 	Encoder encoder;
-	DigitalInput di;
+	DigitalInput switchTop;
+	DigitalInput switchBottom;
 	AnalogInput ai;
 	Gyro myGyro;
+	Accelerometer accel;
+	
 	int newlevel;
 	int oldlevel;
 	double motorScale = 0.98;
 	double currentAngle = 0;
-
+	double gyroResetAngle = 0;
+	
+	
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
 	boolean StraightMode = false;
@@ -58,10 +66,11 @@ public class Robot extends IterativeRobot {
     	talon4 = new Talon(3);
     	talon5 = new Talon(4);
     	encoder = new Encoder(0, 1, true, EncodingType.k4X);
-    	di = new DigitalInput(2);
     	ai = new AnalogInput(1);
     	myGyro = new Gyro(0);
-    	
+    	accel = new BuiltInAccelerometer();
+    	switchTop = new DigitalInput(2);
+    	switchBottom = new DigitalInput(3);
     }
     
     /**
@@ -69,6 +78,7 @@ public class Robot extends IterativeRobot {
      */
     public void autonomousInit() {
     	autoLoopCounter = 0;
+    	myGyro.reset();
     }
 
     /**
@@ -129,9 +139,18 @@ public class Robot extends IterativeRobot {
     	
     	//DEBUG
     	//System.out.printf("%f \t %f \n", axis1, axis3);
-    	System.out.printf("%b %s \n", di.get(), ai.getVoltage());
-    	System.out.println("Gyro: " + myGyro.getAngle() + " Encoder: " + encoder.get());
+    	//System.out.printf("%.4f %.4f \n", ai.getAverageVoltage(), ai.getVoltage());
+    	//System.out.println("Gyro: " + myGyro.getAngle() + " Encoder: " + encoder.get());
         //myRobot.arcadeDrive(stick);
+    	//System.out.printf("accelX: %.4f,\t accelY: %.4f,\t accelZ: %.4f \n", accel.getX(), accel.getY(), accel.getZ());
+    	System.out.printf("%b", di.get());
+    	try{
+    		Thread.sleep(100);
+    	}
+    	catch(InterruptedException e){
+    		System.out.println("HELP!");
+    	}
+
     }
     
     /**
@@ -164,11 +183,11 @@ public class Robot extends IterativeRobot {
     	{ //we're going straight and we're going to check if this is the beginning of our straight section
     		if(StraightMode == false)
     		{
-    			myGyro.reset();
+    			gyroResetAngle = myGyro.getAngle();
     			currentAngle = 0;
     			StraightMode = true;
     		}
-    		if(myGyro.getAngle() > 0.25) // The robot is veering to the right
+    		if(myGyro.getAngle() > gyroResetAngle + 0.25) // The robot is veering to the right
     		{
     			if(myGyro.getAngle() > currentAngle)
     			{
@@ -184,7 +203,7 @@ public class Robot extends IterativeRobot {
     				right *= motorScale;
     			}
     		}
-    		else if(myGyro.getAngle() < -0.25) // The robot is veering to the left
+    		else if(myGyro.getAngle() < gyroResetAngle - 0.25) // The robot is veering to the left
     		{
     			if(myGyro.getAngle() < currentAngle)
     			{
@@ -219,8 +238,10 @@ public class Robot extends IterativeRobot {
     
     public void updateElevator()
     {
+    	
+    	
     	int difference = newlevel - oldlevel;
-    	if (difference == 0)
+    	if (difference == 0 || (switchBottom.get() == true && difference < 0) || (switchTop.get() == true && difference > 0 )) 
     	{
     		talon5.set(0);
     	}
