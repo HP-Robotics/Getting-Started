@@ -1,5 +1,6 @@
 package org.usfirst.frc.team2823.robot;
 
+import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
@@ -34,6 +35,7 @@ public class Robot extends IterativeRobot {
 	Talon talon5;
 	Encoder encoder;
 	DigitalInput di;
+	AnalogInput ai;
 	Gyro myGyro;
 	int newlevel;
 	int oldlevel;
@@ -57,6 +59,7 @@ public class Robot extends IterativeRobot {
     	talon5 = new Talon(4);
     	encoder = new Encoder(0, 1, true, EncodingType.k4X);
     	di = new DigitalInput(2);
+    	ai = new AnalogInput(1);
     	myGyro = new Gyro(0);
     	
     }
@@ -126,8 +129,8 @@ public class Robot extends IterativeRobot {
     	
     	//DEBUG
     	//System.out.printf("%f \t %f \n", axis1, axis3);
-    	//System.out.printf("%b \n", di.get());
-    	//System.out.println("Gyro: " + myGyro.getAngle() + " Encoder: " + encoder.get());
+    	System.out.printf("%b %s \n", di.get(), ai.getVoltage());
+    	System.out.println("Gyro: " + myGyro.getAngle() + " Encoder: " + encoder.get());
         //myRobot.arcadeDrive(stick);
     }
     
