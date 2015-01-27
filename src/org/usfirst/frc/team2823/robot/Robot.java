@@ -60,7 +60,9 @@ public class Robot extends IterativeRobot {
 
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
+	boolean rawElevatorPressed = false;
 	boolean StraightMode = false;
+	boolean rawElevator = false;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -95,8 +97,8 @@ public class Robot extends IterativeRobot {
 		autoLoopCounter = 0;
 		myGyro.reset();
 		
-		autoCommand = (Command)autoChooser.getSelected();
-		autoCommand.start();
+		//autoCommand = (Command)autoChooser.getSelected();
+		//autoCommand.start();
 	}
 
 	/**
@@ -133,23 +135,50 @@ public class Robot extends IterativeRobot {
 		// TODO make sure that pov angle makes sense
 		
 		driveRobot(axis1, axis3, stick.getPOV());
-		if (stick.getRawButton(6)) {
-			if (!(newlevel >= MAXIMUM_LEVEL) && !BAMUpPressed) {
-				newlevel += 1;
-			}
-			BAMUpPressed = true;
-		} else {
-			BAMUpPressed = false;
-		}
+		if(!rawElevator)
+		{
+			if (stick.getRawButton(6))
+			{
 
-		if (stick.getRawButton(8)) {
-			if (!(newlevel <= 1) && !BAMDownPressed) {
-				newlevel -= 1;
+				if (!(newlevel >= MAXIMUM_LEVEL) && !BAMUpPressed) {
+					newlevel += 1;
+				}
+				BAMUpPressed = true;
 			}
-		} else {
-			BAMDownPressed = false;
-		}
+			else
+			{
+				BAMUpPressed = false;
+			}
 
+			if (stick.getRawButton(8))
+			{
+				if (!(newlevel <= 1) && !BAMDownPressed) {
+					newlevel -= 1;
+				}
+				BAMDownPressed = true;
+			}
+			else
+			{
+				BAMDownPressed = false;
+			}
+		}
+		
+		//TODO Make sure raw elevator mode works with the original mode (including setting levels correctly).
+		// We also need to make sure that you can't move the elevator too high or too low.
+		
+		if(stick.getRawButton(3))
+		{
+			if(!rawElevatorPressed)
+			{
+				toggleRawElevator();
+			}
+			rawElevatorPressed = true;
+		}
+		else
+		{
+			rawElevatorPressed = false;
+		}
+		
 		updateElevator();
 		
 		// By the way, I have no idea what ai is. DOCUMENT YOUR CODE BETTER!!!!!!1!!!
@@ -215,7 +244,7 @@ public class Robot extends IterativeRobot {
 				{
 					if (myGyro.getAngle() > currentAngle) {
 						currentAngle = myGyro.getAngle();
-						motorScale -= 0.03; // reduce speed of
+						motorScale -= 0.03; // reduce speed of motor
 					}
 					if (right < -0.01) {
 						left *= motorScale;
@@ -268,7 +297,7 @@ public class Robot extends IterativeRobot {
 		
 		
 		}
-			talon1.set(left);
+		talon1.set(left);
 		talon2.set(left);
 		// Values are multiplied by -1 to ensure that the motors on the right
 		// spin opposite the motors on the left.
@@ -277,23 +306,53 @@ public class Robot extends IterativeRobot {
 
 	}
 
-	public void updateElevator() {
-
-		int difference = newlevel - oldlevel;
-		if (difference == 0 || (switchBottom.get() == true && difference < 0)
-				|| (switchTop.get() == true && difference > 0)) {
-			victor.set(0);
-		} else {
-			if (Math.abs(myEncoder.get()) >= Math.abs((difference
-					* ENCODER_RESOLUTION * LEVEL_HEIGHT)
-					/ (2 * Math.PI * R))) {
-				victor.set(0);
-				oldlevel = newlevel;
-				myEncoder.reset();
-			} else {
-				victor.set(ELEVATOR_SPEED * (Math.signum(difference)));
+	public void updateElevator()
+	{
+		if(rawElevator)
+		{
+			if(stick.getRawButton(6))
+			{
+				victor.set(ELEVATOR_SPEED);
 			}
-
+			else if(stick.getRawButton(8))
+			{
+				victor.set(-1*ELEVATOR_SPEED);
+			}
+			else
+			{
+				victor.set(0);
+			}
+		}
+		else
+		{
+			int difference = newlevel - oldlevel;
+			if (difference == 0 || (switchBottom.get() == true && difference < 0)
+					|| (switchTop.get() == true && difference > 0)) {
+				victor.set(0);
+			} else {
+				if (Math.abs(myEncoder.get()) >= Math.abs((difference
+						* ENCODER_RESOLUTION * LEVEL_HEIGHT)
+						/ (2 * Math.PI * R))) {
+					victor.set(0);
+					oldlevel = newlevel;
+					myEncoder.reset();
+				} else {
+					victor.set(ELEVATOR_SPEED * (Math.signum(difference)));
+				}
+			
+			}
+		}
+	}
+	
+	public void toggleRawElevator()
+	{
+		if(rawElevator)
+		{
+			rawElevator = false;
+		}
+		else
+		{
+			rawElevator = true;
 		}
 	}
 }
