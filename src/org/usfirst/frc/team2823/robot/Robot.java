@@ -12,8 +12,12 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -37,12 +41,15 @@ public class Robot extends IterativeRobot {
 	Talon talon3;
 	Talon talon4;
 	Victor victor;
-	Encoder encoder;
+	Encoder myEncoder;
 	DigitalInput switchTop;
 	DigitalInput switchBottom;
 	AnalogInput ai;
 	Gyro myGyro;
 	Accelerometer accel;
+	
+	Command autoCommand;
+	SendableChooser autoChooser;
 
 	int newlevel;
 	int oldlevel;
@@ -67,12 +74,17 @@ public class Robot extends IterativeRobot {
 		talon3 = new Talon(3);
 		talon4 = new Talon(4);
 		victor = new Victor(0);
-		encoder = new Encoder(0, 1, true, EncodingType.k4X);
+		myEncoder = new Encoder(0, 1, true, EncodingType.k4X);
 		ai = new AnalogInput(1);
 		myGyro = new Gyro(0);
 		accel = new BuiltInAccelerometer();
 		switchTop = new DigitalInput(2);
 		switchBottom = new DigitalInput(3);
+		
+		autoChooser = new SendableChooser();
+		//autoChooser.addDefault("Default", new defaultAuto());
+		//autoChooser.addObject("Alternate", new alternateAuto());
+		//SmartDashboard.putData("Auto Mode", autoChooser);
 
 	}
 
@@ -82,12 +94,16 @@ public class Robot extends IterativeRobot {
 	public void autonomousInit() {
 		autoLoopCounter = 0;
 		myGyro.reset();
+		
+		autoCommand = (Command)autoChooser.getSelected();
+		autoCommand.start();
 	}
 
 	/**
 	 * This function is called periodically during autonomous
 	 */
 	public void autonomousPeriodic() {
+		Scheduler.getInstance().run();
 		if (autoLoopCounter < 100) // Check if we've completed 100 loops
 									// (approximately 2 seconds)
 		{
@@ -103,7 +119,7 @@ public class Robot extends IterativeRobot {
 	 * mode
 	 */
 	public void teleopInit() {
-		encoder.reset();
+		myEncoder.reset();
 		myGyro.reset();
 
 	}
@@ -135,6 +151,8 @@ public class Robot extends IterativeRobot {
 		}
 
 		updateElevator();
+		
+		// By the way, I have no idea what ai is. DOCUMENT YOUR CODE BETTER!!!!!!1!!!
 
 		// DEBUG
 		// System.out.printf("%f \t %f \n", axis1, axis3);
@@ -146,6 +164,14 @@ public class Robot extends IterativeRobot {
 		// System.out.printf("accelX: %.4f,\t accelY: %.4f,\t accelZ: %.4f \n",
 		// accel.getX(), accel.getY(), accel.getZ());
 		//System.out.printf("%b", di.get());
+		
+		SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
+		SmartDashboard.putNumber("Encoder Value", (double)myEncoder.get());
+		SmartDashboard.putNumber("Accel X", accel.getX());
+		SmartDashboard.putNumber("Accel Y", accel.getY());
+		SmartDashboard.putNumber("Accel Z", accel.getZ());
+		SmartDashboard.putNumber("Infrared Value", ai.getVoltage());
+		
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
@@ -258,12 +284,12 @@ public class Robot extends IterativeRobot {
 				|| (switchTop.get() == true && difference > 0)) {
 			victor.set(0);
 		} else {
-			if (Math.abs(encoder.get()) >= Math.abs((difference
+			if (Math.abs(myEncoder.get()) >= Math.abs((difference
 					* ENCODER_RESOLUTION * LEVEL_HEIGHT)
 					/ (2 * Math.PI * R))) {
 				victor.set(0);
 				oldlevel = newlevel;
-				encoder.reset();
+				myEncoder.reset();
 			} else {
 				victor.set(ELEVATOR_SPEED * (Math.signum(difference)));
 			}
