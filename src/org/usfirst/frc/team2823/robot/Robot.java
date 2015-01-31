@@ -32,7 +32,7 @@ public class Robot extends IterativeRobot {
 	static final int MAXIMUM_LEVEL = 78; // inches
 	static final int MINIMUM_LEVEL = 0; // inches
 	static final double RAW_ELEVATOR_STEP = 0.05; // inches per update
-	static final double TURN_SPEED = 0.75; // talon motor input
+	static final double TURN_SPEED = 0.20; // talon motor input
 
 	// RobotDrive myRobot;
 	Joystick stick;
@@ -59,8 +59,8 @@ public class Robot extends IterativeRobot {
 
 	double motorScale = 0.98;
 	double currentAngle = 0;
-	double gyroResetAngle = 0;
-	double globalAngleDesired;
+	double gyroResetAngle = -1;
+	double globalAngleDesired = -1;
 
 	final static double[] voltages = new double[] { 2.36, 2.18, 2.02, 1.87,
 			1.76, 1.66, 1.57, 1.49, 1.42, 1.36, 1.30, 1.24, 1.20, 1.15, 1.11,
@@ -89,13 +89,13 @@ public class Robot extends IterativeRobot {
 		talon4 = new Talon(4);
 		victor = new Victor(0);
 		elevatorEncoder = new Encoder(4, 5, true, EncodingType.k4X);
-		rightEncoder = new Encoder(0, 1, true, EncodingType.k4X);
+		rightEncoder = new Encoder(0, 1, false, EncodingType.k4X);
 		leftEncoder = new Encoder(2, 3, true, EncodingType.k4X);
 		infraredSensor = new AnalogInput(1);
 		myGyro = new Gyro(0);
 		accel = new BuiltInAccelerometer();
-		switchTop = new DigitalInput(2);
-		switchBottom = new DigitalInput(3);
+		switchTop = new DigitalInput(6);
+		switchBottom = new DigitalInput(7);
 		elevatorControl = new PIDController(.1, .001, 0, elevatorEncoder,
 				victor);
 
@@ -242,17 +242,17 @@ public class Robot extends IterativeRobot {
 	public void driveRobot(double left, double right, double angle) {
 		if (angle == -1 && globalAngleDesired < 0) {
 			if (left > 0) {
-				left = Math.floor(4 * left) / 4;
+				left = Math.floor(8 * left) / 8;
 			} else {
-				left = Math.ceil(4 * left) / 4;
+				left = Math.ceil(8 * left) /8;
 			}
 			if (right > 0) {
-				right = Math.floor(4 * right) / 4;
+				right = Math.floor(8 * right) / 8;
 			} else {
-				right = Math.ceil(4 * right) / 4;
+				right = Math.ceil(8 * right) / 8;
 			}
 
-			if (Math.abs(left - right) < 0.0001) {
+			if (Math.abs(left - right) < 0.001) {
 				// we're going straight and we're going to check if
 				// this is the beginning of our straight section
 				if (StraightMode == false) {
@@ -319,12 +319,12 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Right Motors", right);
 		SmartDashboard.putNumber("Global Angle Desired", globalAngleDesired);
 		SmartDashboard.putNumber("Straight Mode Heading", gyroResetAngle);
-		talon1.set(left);
-		talon2.set(left);
+		talon1.set(right);
+		talon2.set(right);
 		// Values are multiplied by -1 to ensure that the motors on the right
 		// spin opposite the motors on the left.
-		talon3.set(-1 * right);
-		talon4.set(-1 * right);
+		talon3.set(-left);
+		talon4.set(-left);
 
 	}
 
@@ -338,7 +338,7 @@ public class Robot extends IterativeRobot {
 
 	public double voltageToDistance(double v) {
 		int i = 0;
-		while (v < voltages[i] && i < voltages.length) {
+		while (i < voltages.length && v < voltages[i]) {
 			i++;
 		}
 
