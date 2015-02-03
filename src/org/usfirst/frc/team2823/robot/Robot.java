@@ -9,8 +9,10 @@ import edu.wpi.first.wpilibj.Gyro;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
@@ -41,7 +43,7 @@ public class Robot extends IterativeRobot {
 	Talon talon2;
 	Talon talon3;
 	Talon talon4;
-	Victor victor;
+	VictorSP victor;
 	Encoder elevatorEncoder;
 	Encoder rightEncoder;
 	Encoder leftEncoder;
@@ -51,6 +53,7 @@ public class Robot extends IterativeRobot {
 	Gyro myGyro;
 	Accelerometer accel; // Used for testing, no longer needed
 	PIDController elevatorControl;
+	PIDController turningControl;
 
 	// TODO add PID Controllers for special approach tote mode.
 
@@ -87,18 +90,19 @@ public class Robot extends IterativeRobot {
 		talon2 = new Talon(2);
 		talon3 = new Talon(3);
 		talon4 = new Talon(4);
-		victor = new Victor(0);
+		victor = new VictorSP(0);
 		elevatorEncoder = new Encoder(4, 5, true, EncodingType.k4X);
-		rightEncoder = new Encoder(0, 1, false, EncodingType.k4X);
+		rightEncoder = new Encoder(0, 1, true, EncodingType.k4X);
 		leftEncoder = new Encoder(2, 3, true, EncodingType.k4X);
 		infraredSensor = new AnalogInput(1);
 		myGyro = new Gyro(0);
 		accel = new BuiltInAccelerometer();
 		switchTop = new DigitalInput(6);
 		switchBottom = new DigitalInput(7);
-		elevatorControl = new PIDController(.1, .001, 0, elevatorEncoder,
+		elevatorControl = new PIDController(0.1, 0.001, 0.0, elevatorEncoder,
 				victor);
-
+		turningControl = new PIDController(0.1, 0.001, 0.0, myGyro, new GyroPIDOutput());
+		turningControl.setPercentTolerance(2);
 		autoChooser = new SendableChooser();
 		// autoChooser.addDefault("Default", new defaultAuto());
 		// autoChooser.addObject("Alternate", new alternateAuto());
@@ -235,8 +239,64 @@ public class Robot extends IterativeRobot {
 	/**
 	 * This function is called periodically during test mode
 	 */
+	public void testInit() {
+		myGyro.reset();
+		elevatorEncoder.reset();
+		leftEncoder.reset();
+		rightEncoder.reset();
+		turningControl.disable();
+	}
 	public void testPeriodic() {
-		LiveWindow.run();
+		SmartDashboard.putNumber("leftEncoder", leftEncoder.get());
+		SmartDashboard.putNumber("rightEncoder", rightEncoder.get());
+		double leftaxis = stick.getRawAxis(1);
+		double rightaxis = stick.getRawAxis(3);
+		SmartDashboard.putNumber("gyro", myGyro.getAngle());
+
+		
+		if (stick.getPOV() !=-1){
+			double target = 90-stick.getPOV()+Math.floor(myGyro.getAngle()/360)*360;
+			turningControl.setSetpoint(target);
+			SmartDashboard.putNumber("Target",target);
+			if (!turningControl.isEnable()){
+				turningControl.enable();
+			}
+
+		}
+		else{
+			if(turningControl.onTarget()){
+				turningControl.disable();
+			}
+		}
+		
+		if(stick.getRawButton(6)){
+			victor.set(0.3);
+			
+		}
+		else if(stick.getRawButton(8)){
+			victor.set(-0.3);
+		}
+		else{
+			victor.set(0);
+		}
+		if (stick.getRawButton(5)){
+		
+			leftaxis = -0.2;
+			rightaxis = -0.2;
+		}
+		
+		if (stick.getRawButton(7)){
+			driveRobot(-0.2,-0.2, -1);
+		}
+		else{
+			
+		talon1.set(rightaxis);
+		talon2.set(rightaxis);
+		talon3.set(-leftaxis);
+		talon4.set(-leftaxis);
+	
+		}
+		
 	}
 
 	public void driveRobot(double left, double right, double angle) {
@@ -252,7 +312,7 @@ public class Robot extends IterativeRobot {
 				right = Math.ceil(8 * right) / 8;
 			}
 
-			if (Math.abs(left - right) < 0.001) {
+			if (Math.abs(left - right) < 0.125) {
 				// we're going straight and we're going to check if
 				// this is the beginning of our straight section
 				if (StraightMode == false) {
@@ -260,22 +320,22 @@ public class Robot extends IterativeRobot {
 					currentAngle = 0;
 					StraightMode = true;
 				}
-				if (myGyro.getAngle() > gyroResetAngle + 0.25) {
+				if (myGyro.getAngle() > gyroResetAngle + 2) {
 					// The robot is veering to the right
 					if (myGyro.getAngle() > currentAngle) {
 						currentAngle = myGyro.getAngle();
-						motorScale -= 0.03; // reduce speed of motor
+						motorScale -= 0.01; // reduce speed of motor
 					}
 					if (right < -0.01) {
 						left *= motorScale;
 					} else {
 						right *= motorScale;
 					}
-				} else if (myGyro.getAngle() < gyroResetAngle - 0.25) {
+				} else if (myGyro.getAngle() < gyroResetAngle - 2) {
 					// The robot is veering to the left
 					if (myGyro.getAngle() < currentAngle) {
 						currentAngle = myGyro.getAngle();
-						motorScale -= 0.03;
+						motorScale -= 0.01;
 					}
 					if (right < -0.01) {
 						right *= motorScale;
@@ -361,4 +421,17 @@ public class Robot extends IterativeRobot {
 	public double encoderToInches(double e) {
 		return e * 2 * Math.PI * R / ENCODER_RESOLUTION;
 	}
+public class GyroPIDOutput implements PIDOutput{
+
+	@Override
+	public void pidWrite(double output) {
+		SmartDashboard.putNumber("PIDOutput", output);
+		talon1.set(output);
+		talon2.set(output);
+		talon3.set(output);
+		talon4.set(output);
+		
+		// TODO Auto-generated method stub
+		
+	}}
 }
