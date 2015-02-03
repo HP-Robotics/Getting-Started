@@ -60,7 +60,7 @@ public class Robot extends IterativeRobot {
 	Command autoCommand;
 	SendableChooser autoChooser;
 
-	double motorScale = 0.98;
+	double motorScale = 0.97;
 	double currentAngle = 0;
 	double gyroResetAngle = -1;
 	double globalAngleDesired = -1;
@@ -78,6 +78,8 @@ public class Robot extends IterativeRobot {
 	boolean rawElevatorPressed = false;
 	boolean StraightMode = false;
 	boolean rawElevator = false;
+	boolean messagePrinted = false;
+	boolean autoChosen = false;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -101,13 +103,13 @@ public class Robot extends IterativeRobot {
 		switchBottom = new DigitalInput(7);
 		elevatorControl = new PIDController(0.1, 0.001, 0.0, elevatorEncoder,
 				victor);
-		turningControl = new PIDController(0.1, 0.001, 0.0, myGyro, new GyroPIDOutput());
+		turningControl = new PIDController(0.05, 0.001, 0.0, myGyro, new GyroPIDOutput());
 		turningControl.setPercentTolerance(2);
 		autoChooser = new SendableChooser();
-		// autoChooser.addDefault("Default", new defaultAuto());
-		// autoChooser.addObject("Alternate", new alternateAuto());
-		// SmartDashboard.putData("Auto Mode", autoChooser);
-
+		autoChooser.addDefault("Default", new DefaultAuto());
+		autoChooser.addObject("Alternate", new AlternateAuto());
+		SmartDashboard.putData("Auto Mode", autoChooser);
+		
 	}
 
 	/**
@@ -117,8 +119,14 @@ public class Robot extends IterativeRobot {
 		autoLoopCounter = 0;
 		myGyro.reset();
 
-		// autoCommand = (Command)autoChooser.getSelected();
-		// autoCommand.start();
+		if(((String)autoChooser.getSelected()).equals("Default"))
+		{
+			new DefaultAuto();
+		}
+		else
+		{
+			new AlternateAuto();
+		}
 	}
 
 	/**
@@ -126,14 +134,6 @@ public class Robot extends IterativeRobot {
 	 */
 	public void autonomousPeriodic() {
 		Scheduler.getInstance().run();
-		if (autoLoopCounter < 100) // Check if we've completed 100 loops
-									// (approximately 2 seconds)
-		{
-			// myRobot.drive(-0.5, 0.0); // drive forwards half speed
-			autoLoopCounter++;
-		} else {
-			// myRobot.drive(0.0, 0.0); // stop robot
-		}
 	}
 
 	/**
@@ -143,6 +143,7 @@ public class Robot extends IterativeRobot {
 	public void teleopInit() {
 		elevatorEncoder.reset();
 		myGyro.reset();
+		LiveWindow.setEnabled(false);
 
 	}
 
@@ -245,7 +246,9 @@ public class Robot extends IterativeRobot {
 		leftEncoder.reset();
 		rightEncoder.reset();
 		turningControl.disable();
+		LiveWindow.setEnabled(false);
 	}
+
 	public void testPeriodic() {
 		SmartDashboard.putNumber("leftEncoder", leftEncoder.get());
 		SmartDashboard.putNumber("rightEncoder", rightEncoder.get());
@@ -270,11 +273,11 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(stick.getRawButton(6)){
-			victor.set(0.3);
+			victor.set(0.95);
 			
 		}
 		else if(stick.getRawButton(8)){
-			victor.set(-0.3);
+			victor.set(-0.95);
 		}
 		else{
 			victor.set(0);
@@ -290,10 +293,13 @@ public class Robot extends IterativeRobot {
 		}
 		else{
 			
-		talon1.set(rightaxis);
-		talon2.set(rightaxis);
-		talon3.set(-leftaxis);
-		talon4.set(-leftaxis);
+		if(!turningControl.isEnable())
+		{
+			talon1.set(rightaxis);
+			talon2.set(rightaxis);
+			talon3.set(-leftaxis);
+			talon4.set(-leftaxis);
+		}
 	
 		}
 		
@@ -317,7 +323,7 @@ public class Robot extends IterativeRobot {
 				// this is the beginning of our straight section
 				if (StraightMode == false) {
 					gyroResetAngle = myGyro.getAngle();
-					currentAngle = 0;
+					currentAngle = gyroResetAngle;
 					StraightMode = true;
 				}
 				if (myGyro.getAngle() > gyroResetAngle + 2) {
@@ -410,7 +416,6 @@ public class Robot extends IterativeRobot {
 		double d1 = distances[i - 1];
 		double v2 = voltages[i];
 		double v1 = voltages[i - 1];
-
 		return (d2 - d1) * (v - v1) / (v2 - v1) + d1;
 	}
 
@@ -421,6 +426,16 @@ public class Robot extends IterativeRobot {
 	public double encoderToInches(double e) {
 		return e * 2 * Math.PI * R / ENCODER_RESOLUTION;
 	}
+	
+	public void defaultAuto()
+	{
+		if(messagePrinted == false)
+		{
+			System.out.println("Hello Jeremy!");
+			messagePrinted = true;
+		}
+	}
+
 public class GyroPIDOutput implements PIDOutput{
 
 	@Override
