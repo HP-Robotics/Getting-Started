@@ -49,7 +49,9 @@ public class Robot extends IterativeRobot {
 	DigitalInput switchTop;
 	DigitalInput switchBottom;
 	AnalogInput infraredSensor; // used for testing the IR sensor
-	AnalogInput infraredSensor2;//TODO assign one for left and one for right and then use them for auto stuff and other stuff
+	AnalogInput infraredSensor2;// TODO assign one for left and one for right
+								// and then use them for auto stuff and other
+								// stuff
 	Gyro myGyro;
 	Accelerometer accel; // Used for testing, no longer needed
 	PIDController elevatorControl;
@@ -103,14 +105,15 @@ public class Robot extends IterativeRobot {
 		switchTop = new DigitalInput(6);
 		switchBottom = new DigitalInput(7);
 		elevatorControl = new PIDController(0.1, 0.001, 0.0, elevatorEncoder,
-				victor);
-		turningControl = new PIDController(0.05, 0.001, 0.0, myGyro, new GyroPIDOutput());
+				new PIDOutputClamp(victor, 0.5));
+		turningControl = new PIDController(0.05, 0.001, 0.0, myGyro,
+				new PIDOutputClamp(new GyroPIDOutput(), 0.5));
 		turningControl.setPercentTolerance(2);
 		autoChooser = new SendableChooser();
-		autoChooser.addDefault("Default", new DefaultAuto());
-		autoChooser.addObject("Alternate", new AlternateAuto());
+		autoChooser.addDefault("Default", new DefaultAuto(this));
+		autoChooser.addObject("Alternate", new AlternateAuto(this));
 		SmartDashboard.putData("Auto Mode", autoChooser);
-		
+
 	}
 
 	/**
@@ -120,21 +123,14 @@ public class Robot extends IterativeRobot {
 		autoLoopCounter = 0;
 		myGyro.reset();
 
-		if(((String)autoChooser.getSelected()).equals("Default"))
-		{
-			new DefaultAuto();
-		}
-		else
-		{
-			new AlternateAuto();
-		}
+		((AutoMode) autoChooser.getSelected()).autoInit();
 	}
 
 	/**
 	 * This function is called periodically during autonomous
 	 */
 	public void autonomousPeriodic() {
-		Scheduler.getInstance().run();
+		((AutoMode) autoChooser.getSelected()).autoPeriodic();
 	}
 
 	/**
@@ -257,53 +253,48 @@ public class Robot extends IterativeRobot {
 		double rightaxis = stick.getRawAxis(3);
 		SmartDashboard.putNumber("gyro", myGyro.getAngle());
 
-		
-		if (stick.getPOV() !=-1){
-			double target = 90-stick.getPOV()+Math.floor(myGyro.getAngle()/360)*360;
+		if (stick.getPOV() != -1) {
+			double target = 90 - stick.getPOV()
+					+ Math.floor(myGyro.getAngle() / 360) * 360;
 			turningControl.setSetpoint(target);
-			SmartDashboard.putNumber("Target",target);
-			if (!turningControl.isEnable()){
+			SmartDashboard.putNumber("Target", target);
+			if (!turningControl.isEnable()) {
 				turningControl.enable();
 			}
 
-		}
-		else{
-			if(turningControl.onTarget()){
+		} else {
+			if (turningControl.onTarget()) {
 				turningControl.disable();
 			}
 		}
-		
-		if(stick.getRawButton(6)){
+
+		if (stick.getRawButton(6)) {
 			victor.set(0.95);
-			
-		}
-		else if(stick.getRawButton(8)){
+
+		} else if (stick.getRawButton(8)) {
 			victor.set(-0.95);
-		}
-		else{
+		} else {
 			victor.set(0);
 		}
-		if (stick.getRawButton(5)){
-		
+		if (stick.getRawButton(5)) {
+
 			leftaxis = -0.2;
 			rightaxis = -0.2;
 		}
-		
-		if (stick.getRawButton(7)){
-			driveRobot(-0.2,-0.2, -1);
+
+		if (stick.getRawButton(7)) {
+			driveRobot(-0.2, -0.2, -1);
+		} else {
+
+			if (!turningControl.isEnable()) {
+				talon1.set(rightaxis);
+				talon2.set(rightaxis);
+				talon3.set(-leftaxis);
+				talon4.set(-leftaxis);
+			}
+
 		}
-		else{
-			
-		if(!turningControl.isEnable())
-		{
-			talon1.set(rightaxis);
-			talon2.set(rightaxis);
-			talon3.set(-leftaxis);
-			talon4.set(-leftaxis);
-		}
-	
-		}
-		
+
 	}
 
 	public void driveRobot(double left, double right, double angle) {
@@ -311,7 +302,7 @@ public class Robot extends IterativeRobot {
 			if (left > 0) {
 				left = Math.floor(8 * left) / 8;
 			} else {
-				left = Math.ceil(8 * left) /8;
+				left = Math.ceil(8 * left) / 8;
 			}
 			if (right > 0) {
 				right = Math.floor(8 * right) / 8;
@@ -427,27 +418,38 @@ public class Robot extends IterativeRobot {
 	public double encoderToInches(double e) {
 		return e * 2 * Math.PI * R / ENCODER_RESOLUTION;
 	}
-	
-	public void defaultAuto()
-	{
-		if(messagePrinted == false)
-		{
-			System.out.println("Hello Jeremy!");
-			messagePrinted = true;
+
+	public class GyroPIDOutput implements PIDOutput {
+
+		@Override
+		public void pidWrite(double output) {
+			SmartDashboard.putNumber("PIDOutput", output);
+
+			talon1.set(output);
+			talon2.set(output);
+			talon3.set(output);
+			talon4.set(output);
+
+			// TODO Auto-generated method stub
+
 		}
 	}
 
-public class GyroPIDOutput implements PIDOutput{
+	public class PIDOutputClamp implements PIDOutput {
+		PIDOutput clampedOutput;
+		double clampValue;
 
-	@Override
-	public void pidWrite(double output) {
-		SmartDashboard.putNumber("PIDOutput", output);
-		talon1.set(output);
-		talon2.set(output);
-		talon3.set(output);
-		talon4.set(output);
-		
-		// TODO Auto-generated method stub
-		
-	}}
+		public PIDOutputClamp(PIDOutput clampedOutput, double clampValue) {
+			this.clampedOutput = clampedOutput;
+			this.clampValue = clampValue;
+
+		}
+
+		public void pidWrite(double output) {
+			if (Math.abs(output) > clampValue) {
+				output = Math.signum(output) * clampValue;
+			}
+			this.clampedOutput.pidWrite(output);
+		}
+	}
 }
