@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
@@ -50,6 +49,7 @@ public class Robot extends IterativeRobot {
 	DigitalInput switchTop;
 	DigitalInput switchBottom;
 	AnalogInput infraredSensor; // used for testing the IR sensor
+	AnalogInput infraredSensor2;//TODO assign one for left and one for right and then use them for auto stuff and other stuff
 	Gyro myGyro;
 	Accelerometer accel; // Used for testing, no longer needed
 	PIDController elevatorControl;
@@ -97,6 +97,7 @@ public class Robot extends IterativeRobot {
 		rightEncoder = new Encoder(0, 1, true, EncodingType.k4X);
 		leftEncoder = new Encoder(2, 3, true, EncodingType.k4X);
 		infraredSensor = new AnalogInput(1);
+		infraredSensor2 = new AnalogInput(2);
 		myGyro = new Gyro(0);
 		accel = new BuiltInAccelerometer();
 		switchTop = new DigitalInput(6);
@@ -318,7 +319,7 @@ public class Robot extends IterativeRobot {
 				right = Math.ceil(8 * right) / 8;
 			}
 
-			if (Math.abs(left - right) < 0.125) {
+			if (Math.abs(left - right) <= 0.125) {
 				// we're going straight and we're going to check if
 				// this is the beginning of our straight section
 				if (StraightMode == false) {
