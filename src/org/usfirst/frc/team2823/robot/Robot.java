@@ -13,9 +13,11 @@ import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.command.PIDSubsystem;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.livewindow.LiveWindowSendable;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -53,7 +55,6 @@ public class Robot extends IterativeRobot {
 								// and then use them for auto stuff and other
 								// stuff
 	Gyro myGyro;
-	Accelerometer accel; // Used for testing, no longer needed
 	PIDController elevatorControl;
 	PIDController turningControl;
 
@@ -101,19 +102,31 @@ public class Robot extends IterativeRobot {
 		infraredSensor = new AnalogInput(1);
 		infraredSensor2 = new AnalogInput(2);
 		myGyro = new Gyro(0);
-		accel = new BuiltInAccelerometer();
 		switchTop = new DigitalInput(6);
 		switchBottom = new DigitalInput(7);
-		elevatorControl = new PIDController(0.1, 0.001, 0.0, elevatorEncoder,
+		elevatorControl = new PIDController(0.1, 0.0, 0.0, elevatorEncoder,
 				new PIDOutputClamp(victor, 0.5));
-		turningControl = new PIDController(0.05, 0.001, 0.0, myGyro,
-				new PIDOutputClamp(new GyroPIDOutput(), 0.5));
+		turningControl = new PIDController(1.0/180.0, 0.0, 0.0, myGyro,
+				new PIDOutputClamp(new GyroPIDOutput(), 0.25));
 		turningControl.setPercentTolerance(2);
 		autoChooser = new SendableChooser();
 		autoChooser.addDefault("Default", new DefaultAuto(this));
 		autoChooser.addObject("Alternate", new AlternateAuto(this));
 		SmartDashboard.putData("Auto Mode", autoChooser);
-
+		
+		LiveWindow.addActuator("Talons", "Talon1", talon1);
+		LiveWindow.addActuator("Talons", "Talon2", talon2);
+		LiveWindow.addActuator("Talons", "Talon3", talon3);
+		LiveWindow.addActuator("Talons", "Talon4", talon4);
+		LiveWindow.addSensor("Drive Sensors", "Right Encoder", rightEncoder);
+		LiveWindow.addSensor("Drive Sensors", "Left Encoder", leftEncoder);
+		LiveWindow.addSensor("Drive Sensors", "Gyro", myGyro);
+		LiveWindow.addSensor("Infrared", "IR1", infraredSensor);
+		LiveWindow.addSensor("Infrared", "IR2", infraredSensor2);
+		LiveWindow.addActuator("Elevator", "Victor", victor);
+		LiveWindow.addSensor("Elevator", "Encoder", elevatorEncoder);
+		LiveWindow.addActuator("PID", "Elevator Controller", elevatorControl);
+		LiveWindow.addActuator("PID", "Drive Controller", turningControl);
 	}
 
 	/**
@@ -249,11 +262,14 @@ public class Robot extends IterativeRobot {
 	public void testPeriodic() {
 		SmartDashboard.putNumber("leftEncoder", leftEncoder.get());
 		SmartDashboard.putNumber("rightEncoder", rightEncoder.get());
+		SmartDashboard.putNumber("elevatorEncoder", elevatorEncoder.get());
 		double leftaxis = stick.getRawAxis(1);
+		leftaxis = Math.min(Math.abs(leftaxis), 0.25)*Math.signum(leftaxis);
 		double rightaxis = stick.getRawAxis(3);
+		rightaxis = Math.min(Math.abs(rightaxis), 0.25)*Math.signum(rightaxis);
 		SmartDashboard.putNumber("gyro", myGyro.getAngle());
 
-		if (stick.getPOV() != -1) {
+		/*if (stick.getPOV() != -1) {
 			double target = 90 - stick.getPOV()
 					+ Math.floor(myGyro.getAngle() / 360) * 360;
 			turningControl.setSetpoint(target);
@@ -266,24 +282,25 @@ public class Robot extends IterativeRobot {
 			if (turningControl.onTarget()) {
 				turningControl.disable();
 			}
-		}
-
+		}*/
+		stick.
+		
 		if (stick.getRawButton(6)) {
-			victor.set(0.95);
+			victor.set(0.5);
 
 		} else if (stick.getRawButton(8)) {
-			victor.set(-0.95);
+			victor.set(-0.5);
 		} else {
 			victor.set(0);
 		}
 		if (stick.getRawButton(5)) {
 
-			leftaxis = -0.2;
-			rightaxis = -0.2;
+			leftaxis = -0.3;
+			rightaxis = -0.3;
 		}
 
 		if (stick.getRawButton(7)) {
-			driveRobot(-0.2, -0.2, -1);
+			driveRobot(-0.3, -0.3, -1);
 		} else {
 
 			if (!turningControl.isEnable()) {
