@@ -32,11 +32,17 @@ public class Robot extends IterativeRobot {
 	static final double R = 2; // inches
 	static final double LEVEL_HEIGHT = 14; // inches
 	static final double ENCODER_RESOLUTION = 2048; // counts per revolution
-	static final double GEAR_RATIO = (1.0 / 50.0) * (15.0 / 22.0); // gearbox is 1:50, chain is 22:15
+	static final double GEAR_RATIO = (1.0 / 50.0) * (15.0 / 22.0); // gearbox is
+																	// 1:50,
+																	// chain is
+																	// 22:15
 	static final int MAXIMUM_LEVEL = 78; // inches
 	static final int MINIMUM_LEVEL = 0; // inches
 	static final double RAW_ELEVATOR_STEP = 0.05; // inches per update
 	static final double TURN_SPEED = 0.20; // talon motor input
+	static final double DELTA_UP = 0.01; // PID output speed increase slow thing
+	static final double DELTA_DOWN = -0.01; // other thing
+	static final double MAX_DRIVE_SPEED = 0.6; // talon motor input
 
 	// RobotDrive myRobot;
 	Joystick stick;
@@ -54,7 +60,7 @@ public class Robot extends IterativeRobot {
 	AnalogInput infraredSensorLeft; // used for testing the IR sensor
 	AnalogInput infraredSensorRight;
 	AnalogInput gyroInput;
-	
+
 	Gyro myGyro;
 	PIDController elevatorControl;
 	PIDController turningControl;
@@ -79,7 +85,7 @@ public class Robot extends IterativeRobot {
 			32, 33, 34, 35, 36, 37, 38, 39, 40 };
 
 	final static double[] voltagesRight = new double[] {};
-	final static double[] distancesRight = new double[] {0};
+	final static double[] distancesRight = new double[] { 0 };
 
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
@@ -114,11 +120,11 @@ public class Robot extends IterativeRobot {
 		turningControl = new PIDController(1.0 / 180.0, 0.0, 0.0, myGyro,
 				new PIDOutputClamp(new GyroPIDOutput(), 0.25));
 		turningControl.setPercentTolerance(2);
-		drivingControl  = new PIDController(0.1, 0.0, 0.0, rightEncoder, new EncoderPIDOutput());
+		drivingControl = new PIDController(0.1, 0.0, 0.0, myGyro,
+				new PIDOutputClamp(new EncoderPIDOutput(), 50.0));
 		drivingControl.setAbsoluteTolerance(100);
 		drivingControl.setOutputRange(-10000, 10000);
-		
-		
+
 		SmartDashboard.putNumber("P", 0.1);
 		SmartDashboard.putNumber("I", 0.0);
 		SmartDashboard.putNumber("D", 0.0);
@@ -174,60 +180,80 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		/*double axis1 = stick.getRawAxis(1);
+		double axis1 = stick.getRawAxis(1);
 		double axis3 = stick.getRawAxis(3);
 		// TODO make sure that pov angle makes sense
-		
-		  // **** JPW disable ****
-		  driveRobot(axis1, axis3, stick.getPOV()); if
-		  (!rawElevator) { if (stick.getRawButton(6)) {
-		  
-		  if (!BAMUpPressed) {
-		  elevatorControl.setSetpoint(inchesToEncoder(Math.min( MAXIMUM_LEVEL,
-		  encoderToInches(elevatorControl.getSetpoint()) + LEVEL_HEIGHT))); }
-		  BAMUpPressed = true; } else { BAMUpPressed = false; }
-		  
-		  if (stick.getRawButton(8)) { if (!BAMDownPressed) {
-		  elevatorControl.setSetpoint(inchesToEncoder(Math.max( MINIMUM_LEVEL,
-		  encoderToInches(elevatorControl.getSetpoint()) - LEVEL_HEIGHT))); }
-		  BAMDownPressed = true; } else { BAMDownPressed = false; } } else { if
-		  (stick.getRawButton(6)) {
-		  
-		  elevatorControl.setSetpoint(inchesToEncoder(Math.min( MAXIMUM_LEVEL,
-		  encoderToInches(elevatorControl.getSetpoint()) +
-		  RAW_ELEVATOR_STEP)));
-		  
-		  }
-		  
-		  if (stick.getRawButton(8)) {
-		  
-		  elevatorControl.setSetpoint(inchesToEncoder(Math.max( MINIMUM_LEVEL,
-		  encoderToInches(elevatorControl.getSetpoint()) -
-		  RAW_ELEVATOR_STEP)));
-		  
-		  } }
-		  
-		  // TODO Make sure raw elevator mode works with the original mode //
-		  (including setting levels correctly). // We also need to make sure
-		  that you can't move the elevator too high // or too low.
-		  
-		  // While driving the elevator for testing, this is useful. Consider
-		  only // using raw mode for small corrections. if
-		  (stick.getRawButton(3)) { if (!rawElevatorPressed) {
-		  toggleRawElevator(); } rawElevatorPressed = true; } else {
-		  rawElevatorPressed = false; }
-		  
-		  SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
-		  SmartDashboard.putNumber("Elevator Encoder Value", (double)
-		  elevatorEncoder.get()); SmartDashboard.putNumber("Infrared Value",
-		  voltageToDistance(infraredSensor.getVoltage()));
-		  SmartDashboard.putNumber("Right Encoder Value", rightEncoder.get());
-		  SmartDashboard.putNumber("Left Encoder Value", leftEncoder.get());
-		  
-		  try { Thread.sleep(100); } catch (InterruptedException e) {
-		  System.out.println("HELP!"); } 
-		  // **** JPW ****
-		 */
+
+		// **** JPW disable ****
+		if (stick.getButtonCount() > 0) {
+			driveRobot(axis1, axis3, stick.getPOV());
+			if (!rawElevator) {
+				elevatorControl.enable();
+				if (stick.getRawButton(6)) {
+
+					if (!BAMUpPressed) {
+						elevatorControl.setSetpoint(inchesToEncoder(Math.min(
+								MAXIMUM_LEVEL,
+								encoderToInches(elevatorControl.getSetpoint())
+										+ LEVEL_HEIGHT)));
+					}
+					BAMUpPressed = true;
+				} else {
+					BAMUpPressed = false;
+				}
+
+				if (stick.getRawButton(8)) {
+					if (!BAMDownPressed) {
+						elevatorControl.setSetpoint(inchesToEncoder(Math.max(
+								MINIMUM_LEVEL,
+								encoderToInches(elevatorControl.getSetpoint())
+										- LEVEL_HEIGHT)));
+					}
+					BAMDownPressed = true;
+				} else {
+					BAMDownPressed = false;
+				}
+			} else {
+				elevatorControl.disable();
+
+				if (stick.getRawButton(6)) {
+					victor.set(RAW_ELEVATOR_STEP);
+				}
+
+				if (stick.getRawButton(8)) {
+					victor.set(-RAW_ELEVATOR_STEP);
+				}
+			}
+
+		// TODO Make sure raw elevator mode works with the original mode
+		// (including setting levels correctly).
+		// We also need to make sure that you can't move the elevator too high
+		// or too low.
+
+		// While driving the elevator for testing, this is useful. Consider only
+		// using raw mode for small corrections.
+		if (stick.getRawButton(3)) {
+			if (!rawElevatorPressed) {
+				toggleRawElevator();
+			}
+			rawElevatorPressed = true;
+		} else {
+			rawElevatorPressed = false;
+		}
+	}
+		SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
+		SmartDashboard.putNumber("Elevator Encoder Value",
+				(double) elevatorEncoder.get());
+		SmartDashboard.putNumber("Left Infrared Value", voltageToDistance(infraredSensorLeft.getVoltage(), voltagesLeft, distancesLeft));
+		SmartDashboard.putNumber("Left Infrared Value", voltageToDistance(infraredSensorRight.getVoltage(), voltagesRight, distancesRight));
+		SmartDashboard.putNumber("Right Encoder Value", rightEncoder.get());
+		SmartDashboard.putNumber("Left Encoder Value", leftEncoder.get());
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			System.out.println("HELP!");
+		}
+		// **** JPW ****
 	}
 
 	/**
@@ -250,32 +276,33 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("elevatorEncoder", elevatorEncoder.get());
 		SmartDashboard.putNumber("gyro angle", myGyro.getAngle());
 		SmartDashboard.putNumber("gyro rate", myGyro.getRate());
-		SmartDashboard.putNumber("Gyro Input", gyroInput.getVoltage());		
+		SmartDashboard.putNumber("Gyro Input", gyroInput.getVoltage());
 
 		SmartDashboard.putNumber("left IR cm", leftIRToDistance());
 		SmartDashboard.putNumber("right IR cm", rightIRToDistance());
-		SmartDashboard.putNumber("left IR V", infraredSensorLeft.getAverageVoltage());
-		SmartDashboard.putNumber("right IR V", infraredSensorRight.getAverageVoltage());
-		
+		SmartDashboard.putNumber("left IR V",
+				infraredSensorLeft.getAverageVoltage());
+		SmartDashboard.putNumber("right IR V",
+				infraredSensorRight.getAverageVoltage());
+
 		SmartDashboard.putBoolean("top switch", switchTop.get());
-		 
-		
+
 		double leftaxis = stick.getRawAxis(1);
-		//leftaxis = Math.min(Math.abs(leftaxis), 0.25) * Math.signum(leftaxis);
+		// leftaxis = Math.min(Math.abs(leftaxis), 0.25) *
+		// Math.signum(leftaxis);
 		double rightaxis = stick.getRawAxis(3);
-		//rightaxis = Math.min(Math.abs(rightaxis), 0.25) * Math.signum(rightaxis);
+		// rightaxis = Math.min(Math.abs(rightaxis), 0.25) *
+		// Math.signum(rightaxis);
 
 		/*
-		  // **** ML DISABLE ****
-		  if (stick.getPOV() != -1) { double target = 90 - stick.getPOV() +
-		  Math.floor(myGyro.getAngle() / 360) * 360;
-		  turningControl.setSetpoint(target);
-		  SmartDashboard.putNumber("Target", target); if
-		  (!turningControl.isEnable()) { turningControl.enable(); }
-		  
-		  } else { if (turningControl.onTarget()) { turningControl.disable(); }
-		  }
-		  // **** ML DISABLE ****
+		 * // **** ML DISABLE **** if (stick.getPOV() != -1) { double target =
+		 * 90 - stick.getPOV() + Math.floor(myGyro.getAngle() / 360) * 360;
+		 * turningControl.setSetpoint(target);
+		 * SmartDashboard.putNumber("Target", target); if
+		 * (!turningControl.isEnable()) { turningControl.enable(); }
+		 * 
+		 * } else { if (turningControl.onTarget()) { turningControl.disable(); }
+		 * } // **** ML DISABLE ****
 		 */
 
 		if (stick.getRawButton(6)) {
@@ -285,47 +312,47 @@ public class Robot extends IterativeRobot {
 		} else {
 			victor.set(0);
 		}
-				
-		   if (stick.getRawButton(5)) {
-			 if (!drivingControl.isEnable()){
-				 rightEncoder.reset();
-				 drivingControl.setSetpoint(0);
-				 drivingControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
-				 drivingControl.enable();
-			 }
-			 drivingControl.setSetpoint(drivingControl.getSetpoint() + 256);
-		
-		   }
-		   else if(stick.getRawButton(7)){
-			   drivingControl.disable();
-		   }
-		   
 
-		   
-		  
-		  /*
-		  		   // ****JPW disable ****
-		  if (stick.getRawButton(7)) { driveRobot(-0.3, -0.3, -1); } else {
-		   // **** JPW disable ****
-		    * 
-		    */
-		  if (!drivingControl.isEnable()) {
+		if (stick.getRawButton(5)) {
+			if (!drivingControl.isEnable()) {
+				rightEncoder.reset();
+				myGyro.reset();
+				drivingControl.setSetpoint(-90);
+				drivingControl.setPID(SmartDashboard.getNumber("P"),
+						SmartDashboard.getNumber("I"),
+						SmartDashboard.getNumber("D"));
+				drivingControl.enable();
+			}
+			// drivingControl.setSetpoint(drivingControl.getSetpoint() + 256);
+
+		} else if (stick.getRawButton(7)) {
+			drivingControl.disable();
+		}
+
+		/*
+		 * // ****JPW disable **** if (stick.getRawButton(7)) { driveRobot(-0.3,
+		 * -0.3, -1); } else { // **** JPW disable ****
+		 */
+		if (!drivingControl.isEnable()) {
 			talon1.set(rightaxis);
 			talon2.set(rightaxis);
 			talon3.set(-leftaxis);
 			talon4.set(-leftaxis);
-			
-			   // **** JPW disable ****
+
+			// **** JPW disable ****
 		}
-		  /*
-		    } 
-		   // **** JPW disable ****
+		/*
+		 * } // **** JPW disable ****
 		 */
 
 	}
 
 	public void driveRobot(double left, double right, double angle) {
-		if (angle == -1 && globalAngleDesired < 0) {
+		talon1.set(-MAX_DRIVE_SPEED*stick.getRawAxis(1));
+		talon2.set(-MAX_DRIVE_SPEED*stick.getRawAxis(1));
+		talon1.set(MAX_DRIVE_SPEED*stick.getRawAxis(3));
+		talon2.set(MAX_DRIVE_SPEED*stick.getRawAxis(3));
+		/*if (angle == -1 && globalAngleDesired < 0) {
 			if (left > 0) {
 				left = Math.floor(8 * left) / 8;
 			} else {
@@ -398,7 +425,7 @@ public class Robot extends IterativeRobot {
 				globalAngleDesired = -1;
 			}
 
-		}
+		}*/
 
 		SmartDashboard.putNumber("Left Motors", left);
 		SmartDashboard.putNumber("Right Motors", right);
@@ -420,16 +447,19 @@ public class Robot extends IterativeRobot {
 			rawElevator = true;
 		}
 	}
-	
+
 	public double leftIRToDistance() {
-		return voltageToDistance(infraredSensorLeft.getAverageVoltage(), voltagesLeft, distancesLeft);
-	}
-	
-	public double rightIRToDistance() {
-		return voltageToDistance(infraredSensorRight.getAverageVoltage(), voltagesRight, distancesRight);
+		return voltageToDistance(infraredSensorLeft.getAverageVoltage(),
+				voltagesLeft, distancesLeft);
 	}
 
-	public double voltageToDistance(double v, double[] voltages, double[] distances) {
+	public double rightIRToDistance() {
+		return voltageToDistance(infraredSensorRight.getAverageVoltage(),
+				voltagesRight, distancesRight);
+	}
+
+	public double voltageToDistance(double v, double[] voltages,
+			double[] distances) {
 		int i = 0;
 		while (i < voltages.length && v < voltages[i]) {
 			i++;
@@ -466,21 +496,30 @@ public class Robot extends IterativeRobot {
 			talon4.set(output);
 		}
 	}
+
 	public class EncoderPIDOutput implements PIDOutput {
 
 		@Override
 		public void pidWrite(double output) {
 			SmartDashboard.putNumber("Encoder PIDOutput", output);
 
-			output = output/10000;
+			// output /= 10000;
 
+			/*
+			 * if(output > talon3.get()) { output = Math.min(output -
+			 * talon3.get(), DELTA_UP) + talon3.get(); } else if(output <
+			 * talon3.get()) { output = Math.max(output - talon3.get(),
+			 * DELTA_DOWN) + talon3.get(); }
+			 */
+
+			output /= -100;
 			talon1.set(-output);
 			talon2.set(-output);
-			talon3.set(output);
-			talon4.set(output);
+			talon3.set(-.75 * output);
+			talon4.set(-.75 * output);
 		}
+
 	}
-	
 
 	public class PIDOutputClamp implements PIDOutput {
 		PIDOutput clampedOutput;
