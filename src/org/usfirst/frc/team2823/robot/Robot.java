@@ -188,6 +188,7 @@ public class Robot extends IterativeRobot {
 
 			if (stick.getRawButton(6)) {
 				if (!BAMUpPressed) {
+					LEDSignboard.sendTextMessage("Going Down");
 					elevatorControl.setSetpoint(inchesToEncoder(Math.min(
 							MAXIMUM_LEVEL,
 							encoderToInches(elevatorControl.getSetpoint())
@@ -200,6 +201,7 @@ public class Robot extends IterativeRobot {
 
 			if (stick.getRawButton(8)) {
 				if (!BAMDownPressed) {
+					LEDSignboard.sendTextMessage("Aye Aye");
 					elevatorControl.setSetpoint(inchesToEncoder(Math.max(
 							MINIMUM_LEVEL,
 							encoderToInches(elevatorControl.getSetpoint())
@@ -212,6 +214,7 @@ public class Robot extends IterativeRobot {
 
 			// ***** RAW ELEVATOR CONTROL *****
 			if (stick.getRawButton(5)) {
+				LEDSignboard.sendFile(LEDSignboard.UP_ARROW);
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
 				}
@@ -221,6 +224,7 @@ public class Robot extends IterativeRobot {
 					victor.set(0);
 				}
 			} else if (stick.getRawButton(7)) {
+				LEDSignboard.sendFile(LEDSignboard.DOWN_ARROW);
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
 				}
