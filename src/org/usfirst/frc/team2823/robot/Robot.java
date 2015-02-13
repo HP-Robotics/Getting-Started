@@ -24,20 +24,20 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * directory.
  */
 public class Robot extends IterativeRobot {
-	static final double R = 2; // inches
+	static final double R = 2.5; // inches
 	static final double LEVEL_HEIGHT = 14; // inches
 	static final double ENCODER_RESOLUTION = 2048; // counts per revolution
-	static final double GEAR_RATIO = (1.0 / 50.0) * (15.0 / 22.0); // gearbox is
+	static final double GEAR_RATIO = (15.0 / 22.0); // gearbox is
 																	// 1:50,
 																	// chain is
 																	// 22:15
 	static final int MAXIMUM_LEVEL = 78; // inches
 	static final int MINIMUM_LEVEL = 0; // inches
-	static final double RAW_ELEVATOR_STEP = 0.05; // inches per update
+	static final double RAW_ELEVATOR_STEP = 0.5; // inches per update
 	static final double TURN_SPEED = 0.20; // talon motor input
 	static final double DELTA_UP = 0.01; // PID output speed increase slow thing
 	static final double DELTA_DOWN = -0.01; // other thing
-	static final double MAX_DRIVE_SPEED = 0.6; // talon motor input
+	static final double MAX_DRIVE_SPEED = 0.4; // talon motor input
 	static final double MANUAL_INCREASE = 0.5; // amount (in inches) added to
 												// setpoint of elevator for
 												// every
@@ -115,7 +115,7 @@ public class Robot extends IterativeRobot {
 		switchTop = new DigitalInput(6);
 		switchBottom = new DigitalInput(7);
 		elevatorControl = new PIDController(0.1, 0.0, 0.0, elevatorEncoder,
-				new SwitchOverride(new PIDOutputClamp(victor, 0.5)));
+				new SwitchOverride(new PIDOutputClamp(victor, 0.75)));
 		turningControl = new PIDController(1.0 / 180.0, 0.0, 0.0, myGyro,
 				new PIDOutputClamp(new GyroPIDOutput(), 0.25));
 		turningControl.setPercentTolerance(2);
@@ -155,6 +155,7 @@ public class Robot extends IterativeRobot {
 		myGyro.reset();
 
 		((AutoMode) autoChooser.getSelected()).autoInit();
+		LEDSignboard.sendTextMessage("Initializing global domination routine...");
 	}
 
 	/**
@@ -172,6 +173,8 @@ public class Robot extends IterativeRobot {
 		elevatorEncoder.reset();
 		myGyro.reset();
 		LiveWindow.setEnabled(false);
+		LEDSignboard.sendTextMessage("We have ultimate control!");
+		
 
 	}
 
@@ -179,6 +182,9 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
+		elevatorControl.setPID(SmartDashboard.getNumber("P"),
+				SmartDashboard.getNumber("I"),
+				SmartDashboard.getNumber("D"));
 		double axis1 = stick.getRawAxis(1);
 		double axis3 = stick.getRawAxis(3);
 
@@ -187,8 +193,12 @@ public class Robot extends IterativeRobot {
 			driveRobot(axis1 * MAX_DRIVE_SPEED, axis3 * MAX_DRIVE_SPEED);
 
 			if (stick.getRawButton(6)) {
+				if(!elevatorControl.isEnable())
+				{
+					elevatorControl.enable();
+				}
 				if (!BAMUpPressed) {
-					LEDSignboard.sendTextMessage("Going Down");
+					LEDSignboard.sendTextMessage("Aye Aye");
 					elevatorControl.setSetpoint(inchesToEncoder(Math.min(
 							MAXIMUM_LEVEL,
 							encoderToInches(elevatorControl.getSetpoint())
@@ -200,8 +210,12 @@ public class Robot extends IterativeRobot {
 			}
 
 			if (stick.getRawButton(8)) {
+				if(!elevatorControl.isEnable())
+				{
+					elevatorControl.enable();
+				}
 				if (!BAMDownPressed) {
-					LEDSignboard.sendTextMessage("Aye Aye");
+					LEDSignboard.sendTextMessage("Going Down");
 					elevatorControl.setSetpoint(inchesToEncoder(Math.max(
 							MINIMUM_LEVEL,
 							encoderToInches(elevatorControl.getSetpoint())
@@ -218,7 +232,7 @@ public class Robot extends IterativeRobot {
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
 				}
-				if (switchTop.get()) {
+				if (!switchTop.get()) {
 					victor.set(RAW_ELEVATOR_STEP);
 				} else {
 					victor.set(0);
@@ -228,7 +242,7 @@ public class Robot extends IterativeRobot {
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
 				}
-				if (switchBottom.get()) {
+				if (!switchBottom.get()) {
 					victor.set(-RAW_ELEVATOR_STEP);
 				} else {
 					victor.set(0);
@@ -250,6 +264,10 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
 		SmartDashboard.putNumber("Elevator Encoder Value",
 				(double) elevatorEncoder.get());
+		SmartDashboard.putNumber("Elevator Inches",
+				(double) encoderToInches(elevatorEncoder.get()));
+		SmartDashboard.putNumber("ELEVATOR SETPOINT", elevatorControl.getSetpoint());
+		SmartDashboard.putNumber("ELEVATOR OUTPUT", elevatorControl.get());
 		SmartDashboard.putNumber(
 				"Left Infrared Value",
 				voltageToDistance(infraredSensorLeft.getVoltage(),
@@ -289,7 +307,11 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("gyro angle", myGyro.getAngle());
 		SmartDashboard.putNumber("gyro rate", myGyro.getRate());
 		SmartDashboard.putNumber("Gyro Input", gyroInput.getVoltage());
-
+		
+		SmartDashboard.putBoolean("Switch Top", switchTop.get());
+		SmartDashboard.putBoolean("Switch Bottom", switchBottom.get());
+		
+		
 		SmartDashboard.putNumber("left IR cm", leftIRToDistance());
 		SmartDashboard.putNumber("right IR cm", rightIRToDistance());
 		SmartDashboard.putNumber("left IR V",
@@ -325,7 +347,7 @@ public class Robot extends IterativeRobot {
 			victor.set(0);
 		}
 
-		if (stick.getRawButton(5)) {
+		/*if (stick.getRawButton(5)) {
 			if (!drivingControl.isEnable()) {
 				rightEncoder.reset();
 				myGyro.reset();
@@ -339,7 +361,7 @@ public class Robot extends IterativeRobot {
 
 		} else if (stick.getRawButton(7)) {
 			drivingControl.disable();
-		}
+		}*/
 
 		/*
 		 * // ****JPW disable **** if (stick.getRawButton(7)) { driveRobot(-0.3,
@@ -365,6 +387,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Right Motors", right);
 		SmartDashboard.putNumber("Global Angle Desired", globalAngleDesired);
 		SmartDashboard.putNumber("Straight Mode Heading", gyroResetAngle);
+		
 		talon1.set(right);
 		talon2.set(right);
 		// Values are multiplied by -1 to ensure that the motors on the right
@@ -403,11 +426,11 @@ public class Robot extends IterativeRobot {
 	}
 
 	public double inchesToEncoder(double i) {
-		return i * (ENCODER_RESOLUTION * GEAR_RATIO) / (2 * Math.PI * R);
+		return i * ENCODER_RESOLUTION / (2 * Math.PI * R * GEAR_RATIO);
 	}
 
 	public double encoderToInches(double e) {
-		return e * 2 * Math.PI * R / (ENCODER_RESOLUTION * GEAR_RATIO);
+		return e * 2 * Math.PI * R * GEAR_RATIO /(ENCODER_RESOLUTION);
 	}
 
 	public class GyroPIDOutput implements PIDOutput {
@@ -429,7 +452,7 @@ public class Robot extends IterativeRobot {
 		public void pidWrite(double output) {
 			SmartDashboard.putNumber("Encoder PIDOutput", output);
 
-			// output /= 10000;
+		 output /= 10000;
 
 			/*
 			 * if(output > talon3.get()) { output = Math.min(output -
@@ -475,13 +498,13 @@ public class Robot extends IterativeRobot {
 		@Override
 		public void pidWrite(double output) {
 			if (output > 0) { // +
-				if (switchTop.get()) { // not pressed
+				if (!switchTop.get()) { // not pressed
 					safeOutput.pidWrite(output);
 				} else {
 					safeOutput.pidWrite(0);
 				}
 			} else {// -
-				if (switchBottom.get()) {// notpressed
+				if (!switchBottom.get()) {// notpressed
 					safeOutput.pidWrite(output);
 				} else {
 					safeOutput.pidWrite(0);
