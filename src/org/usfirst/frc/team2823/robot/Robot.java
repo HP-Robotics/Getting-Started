@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
+import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Command;
@@ -114,7 +115,7 @@ public class Robot extends IterativeRobot {
 		myGyro = new Gyro(gyroInput);
 		switchTop = new DigitalInput(6);
 		switchBottom = new DigitalInput(7);
-		elevatorControl = new PIDController(0.1, 0.0, 0.0, elevatorEncoder,
+		elevatorControl = new PIDController(0.1, 0.0, 0.0, new InchesEncoder(elevatorEncoder),
 				new SwitchOverride(new PIDOutputClamp(victor, 0.75)));
 		turningControl = new PIDController(1.0 / 180.0, 0.0, 0.0, myGyro,
 				new PIDOutputClamp(new GyroPIDOutput(), 0.25));
@@ -199,10 +200,9 @@ public class Robot extends IterativeRobot {
 				}
 				if (!BAMUpPressed) {
 					LEDSignboard.sendTextMessage("Aye Aye");
-					elevatorControl.setSetpoint(inchesToEncoder(Math.min(
-							MAXIMUM_LEVEL,
-							encoderToInches(elevatorControl.getSetpoint())
-									+ LEVEL_HEIGHT)));
+					elevatorControl.setSetpoint(Math.min(
+							MAXIMUM_LEVEL, elevatorControl.getSetpoint()
+									+ LEVEL_HEIGHT));
 				}
 				BAMUpPressed = true;
 			} else {
@@ -216,10 +216,9 @@ public class Robot extends IterativeRobot {
 				}
 				if (!BAMDownPressed) {
 					LEDSignboard.sendTextMessage("Going Down");
-					elevatorControl.setSetpoint(inchesToEncoder(Math.max(
-							MINIMUM_LEVEL,
-							encoderToInches(elevatorControl.getSetpoint())
-									- LEVEL_HEIGHT)));
+					elevatorControl.setSetpoint(Math.max(
+							MINIMUM_LEVEL, elevatorControl.getSetpoint()
+									- LEVEL_HEIGHT));
 				}
 				BAMDownPressed = true;
 			} else {
@@ -255,10 +254,10 @@ public class Robot extends IterativeRobot {
 				if (!elevatorControl.isEnable()) {
 					elevatorControl.enable();
 				}
-				elevatorControl.setSetpoint(inchesToEncoder(Math
+				elevatorControl.setSetpoint(Math
 						.round(encoderToInches(elevatorEncoder.get())
 								/ LEVEL_HEIGHT)
-						* LEVEL_HEIGHT));
+						* LEVEL_HEIGHT);
 			}
 		}
 		SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
@@ -510,6 +509,18 @@ public class Robot extends IterativeRobot {
 					safeOutput.pidWrite(0);
 				}
 			}
+		}
+	}
+	
+	public class InchesEncoder implements PIDSource {
+		PIDSource mySource;
+		
+		public InchesEncoder(PIDSource mySource) {
+			this.mySource = mySource;
+		}
+		@Override
+		public double pidGet() {
+			return encoderToInches(mySource.pidGet());
 		}
 	}
 }
