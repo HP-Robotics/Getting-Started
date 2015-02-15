@@ -41,3 +41,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.class
+*.class
+*.jar
+bin/org/usfirst/frc/team2823/robot/Robot.class
