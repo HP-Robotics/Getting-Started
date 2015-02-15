@@ -25,7 +25,7 @@ public class LEDSignboard {
 	private final DatagramSocket serverSocket;
 
 	private LEDSignboard() throws IOException {
-		pi = InetAddress.getByName("raspberry-pi.local");
+		pi = InetAddress.getByName("10.28.23.12");
 		serverSocket = new DatagramSocket(9876);
 	}
 

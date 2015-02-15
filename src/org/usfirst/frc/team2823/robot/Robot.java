@@ -1,5 +1,7 @@
 package org.usfirst.frc.team2823.robot;
 
+import java.util.Arrays;
+
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -11,6 +13,7 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
@@ -26,7 +29,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class Robot extends IterativeRobot {
 	static final double R = 2.5; // inches
-	static final double LEVEL_HEIGHT = 14; // inches
+	static final double LEVEL_HEIGHT = 15; // inches
 	static final double ENCODER_RESOLUTION = 2048; // counts per revolution
 	static final double GEAR_RATIO = (15.0 / 22.0); // gearbox is
 																	// 1:50,
@@ -34,11 +37,11 @@ public class Robot extends IterativeRobot {
 																	// 22:15
 	static final int MAXIMUM_LEVEL = 78; // inches
 	static final int MINIMUM_LEVEL = 0; // inches
-	static final double RAW_ELEVATOR_STEP = 0.5; // inches per update
+	static final double RAW_ELEVATOR_STEP = 1.0; // victor speed
 	static final double TURN_SPEED = 0.20; // talon motor input
 	static final double DELTA_UP = 0.01; // PID output speed increase slow thing
 	static final double DELTA_DOWN = -0.01; // other thing
-	static final double MAX_DRIVE_SPEED = 0.4; // talon motor input
+	static final double MAX_DRIVE_SPEED = 0.42; // talon motor input
 	static final double MANUAL_INCREASE = 0.5; // amount (in inches) added to
 												// setpoint of elevator for
 												// every
@@ -66,6 +69,9 @@ public class Robot extends IterativeRobot {
 	PIDController elevatorControl;
 	PIDController turningControl;
 	PIDController drivingControl;
+	PIDController leftIRControl;
+	PIDController rightIRControl;
+
 
 	// TODO add PID Controllers for special approach tote mode.
 
@@ -87,13 +93,25 @@ public class Robot extends IterativeRobot {
 
 	final static double[] voltagesRight = new double[] {};
 	final static double[] distancesRight = new double[] { 0 };
+	final static double[] levels={0,3,10.25,17,18,33,48,52};
+	final static String[] LevelNames={"!B", "!T1", "!C1", "!C2", "!T2", "!T3", "!T4", "!C3"};
+	double myDriveTime=0.6;
+	int elevatorIndex=0;
 
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
+	boolean switchBottomPressed = false;
 	boolean elevatorResetPressed = false;
 	boolean StraightMode = false;
 	boolean messagePrinted = false;
 	boolean autoChosen = false;
+	int shimmy = 0;
+	double shimmyTimeout = 0.05;
+	int shimmyMaxCount = 5;
+	int shimmyCount = 0;
+	Timer shimmyTime = new Timer();
+	double shimmyPower = 1.0;
+	
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -115,8 +133,8 @@ public class Robot extends IterativeRobot {
 		myGyro = new Gyro(gyroInput);
 		switchTop = new DigitalInput(6);
 		switchBottom = new DigitalInput(7);
-		elevatorControl = new PIDController(0.1, 0.0, 0.0, new InchesEncoder(elevatorEncoder),
-				new SwitchOverride(new PIDOutputClamp(victor, 0.75)));
+		elevatorControl = new PIDController(0.4, 0.0, 0.0, new InchesEncoder(elevatorEncoder),
+				new SwitchOverride(new PIDOutputClamp(victor, 1.0)));
 		turningControl = new PIDController(1.0 / 180.0, 0.0, 0.0, myGyro,
 				new PIDOutputClamp(new GyroPIDOutput(), 0.25));
 		turningControl.setPercentTolerance(2);
@@ -124,10 +142,15 @@ public class Robot extends IterativeRobot {
 				new PIDOutputClamp(new EncoderPIDOutput(), 50.0));
 		drivingControl.setAbsoluteTolerance(100);
 		drivingControl.setOutputRange(-10000, 10000);
+		leftIRControl = new PIDController(0.500,0.015,2.000, infraredSensorLeft, new PIDOutputClamp(new IRPIDOutputLeft(), 0.4) );
+		rightIRControl = new PIDController(0.500,0.015,2.000, infraredSensorRight, new PIDOutputClamp(new IRPIDOutputRight(), 0.4) );
 
-		SmartDashboard.putNumber("P", 0.1);
-		SmartDashboard.putNumber("I", 0.0);
-		SmartDashboard.putNumber("D", 0.0);
+		SmartDashboard.putNumber("P", 0.500);
+		SmartDashboard.putNumber("I", 0.015);
+		SmartDashboard.putNumber("D", 2.0);
+		SmartDashboard.putNumber("L-Speed",0.0);
+		SmartDashboard.putNumber("R-Speed", 0.0);
+		SmartDashboard.putNumber("Auto Drive Time",myDriveTime);
 		autoChooser = new SendableChooser();
 		autoChooser.addDefault("Default", new DefaultAuto(this));
 		autoChooser.addObject("Alternate", new AlternateAuto(this));
@@ -154,7 +177,7 @@ public class Robot extends IterativeRobot {
 	public void autonomousInit() {
 		autoLoopCounter = 0;
 		myGyro.reset();
-
+		myDriveTime=SmartDashboard.getNumber("Auto Drive Time");
 		((AutoMode) autoChooser.getSelected()).autoInit();
 		LEDSignboard.sendTextMessage("Initializing global domination routine...");
 	}
@@ -174,7 +197,7 @@ public class Robot extends IterativeRobot {
 		elevatorEncoder.reset();
 		myGyro.reset();
 		LiveWindow.setEnabled(false);
-		LEDSignboard.sendTextMessage("We have ultimate control!");
+		LEDSignboard.sendFile("HPPretty_legit.ppm");
 		
 
 	}
@@ -183,15 +206,19 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		elevatorControl.setPID(SmartDashboard.getNumber("P"),
-				SmartDashboard.getNumber("I"),
-				SmartDashboard.getNumber("D"));
+		leftIRControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		rightIRControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+
 		double axis1 = stick.getRawAxis(1);
 		double axis3 = stick.getRawAxis(3);
 
-		// **** JPW disable ****
+		if (!switchBottom.get() && switchBottomPressed){
+			elevatorEncoder.reset();			
+		}
+		switchBottomPressed = switchBottom.get();
+		
 		if (stick.getButtonCount() > 0) {
-			driveRobot(axis1 * MAX_DRIVE_SPEED, axis3 * MAX_DRIVE_SPEED);
+			
 
 			if (stick.getRawButton(6)) {
 				if(!elevatorControl.isEnable())
@@ -199,26 +226,20 @@ public class Robot extends IterativeRobot {
 					elevatorControl.enable();
 				}
 				if (!BAMUpPressed) {
-					LEDSignboard.sendTextMessage("Aye Aye");
-					elevatorControl.setSetpoint(Math.min(
-							MAXIMUM_LEVEL, elevatorControl.getSetpoint()
-									+ LEVEL_HEIGHT));
+					elevatorUp();
 				}
 				BAMUpPressed = true;
 			} else {
 				BAMUpPressed = false;
 			}
-
+			
 			if (stick.getRawButton(8)) {
 				if(!elevatorControl.isEnable())
 				{
 					elevatorControl.enable();
 				}
 				if (!BAMDownPressed) {
-					LEDSignboard.sendTextMessage("Going Down");
-					elevatorControl.setSetpoint(Math.max(
-							MINIMUM_LEVEL, elevatorControl.getSetpoint()
-									- LEVEL_HEIGHT));
+					elevatorDown();
 				}
 				BAMDownPressed = true;
 			} else {
@@ -227,6 +248,7 @@ public class Robot extends IterativeRobot {
 
 			// ***** RAW ELEVATOR CONTROL *****
 			if (stick.getRawButton(5)) {
+				elevatorIndex=-1;
 				LEDSignboard.sendFile(LEDSignboard.UP_ARROW);
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
@@ -237,12 +259,16 @@ public class Robot extends IterativeRobot {
 					victor.set(0);
 				}
 			} else if (stick.getRawButton(7)) {
-				LEDSignboard.sendFile(LEDSignboard.DOWN_ARROW);
+					elevatorIndex=-1;
+					LEDSignboard.sendFile(LEDSignboard.DOWN_ARROW);
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
+
 				}
 				if (!switchBottom.get()) {
 					victor.set(-RAW_ELEVATOR_STEP);
+					
+					
 				} else {
 					victor.set(0);
 				}
@@ -251,13 +277,73 @@ public class Robot extends IterativeRobot {
 			}
 
 			if (stick.getRawButton(10)) {
+				elevatorIndex=-1;
 				if (!elevatorControl.isEnable()) {
 					elevatorControl.enable();
 				}
-				elevatorControl.setSetpoint(Math
-						.round(encoderToInches(elevatorEncoder.get())
-								/ LEVEL_HEIGHT)
-						* LEVEL_HEIGHT);
+				elevatorControl.setSetpoint(encoderToInches(elevatorEncoder.get()));
+			}
+			
+			if (stick.getPOV() == 180) {
+				if (shimmy >= 0) {
+					if (shimmy == 0) {
+
+						LEDSignboard.sendTextMessage("Shiver me timbers!!!!!!");
+						shimmy = 1;
+						shimmyCount = 0;
+						shimmyTime.start();
+					}
+					
+					if (shimmyTime.hasPeriodPassed(shimmyTimeout)) {
+						shimmyCount += 1;
+						if (shimmyCount > shimmyMaxCount)
+							shimmy = -1;
+						
+						if (shimmy == 1)
+							shimmy = 2;
+						else if (shimmy == 2)
+							shimmy = 1;
+						
+						if (shimmyCount == 3) {
+							elevatorUp();
+						}	
+	
+					}
+					
+					if (shimmy == 1)
+						axis1 = -1 * shimmyPower;
+					if (shimmy == 2)
+						axis3 = -1 * shimmyPower;
+				}
+					
+			}
+			else {
+				shimmy = 0;
+			}
+		
+			if (stick.getPOV()==0){
+				leftIRControl.setSetpoint(1.1);
+				rightIRControl.setSetpoint(1.1);
+
+				if (! leftIRControl.isEnable())
+				    LEDSignboard.sendTextMessage("Yarrr!!!");
+		
+				leftIRControl.enable();
+				rightIRControl.enable();	}
+			else{
+				leftIRControl.disable();
+				rightIRControl.disable();
+			}
+			if (stick.getPOV()==90) {
+				axis1=SmartDashboard.getNumber("L-Speed")/MAX_DRIVE_SPEED;
+				axis3=SmartDashboard.getNumber("R-Speed")/MAX_DRIVE_SPEED;
+			}
+			else if(stick.getPOV()==270) {
+				axis3=SmartDashboard.getNumber("L-Speed")/MAX_DRIVE_SPEED;
+				axis1=SmartDashboard.getNumber("R-Speed")/MAX_DRIVE_SPEED;
+			}
+			if (!leftIRControl.isEnable()){
+				driveRobot(axis1 * MAX_DRIVE_SPEED, axis3 * MAX_DRIVE_SPEED);
 			}
 		}
 		SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
@@ -277,12 +363,14 @@ public class Robot extends IterativeRobot {
 						voltagesRight, distancesRight));
 		SmartDashboard.putNumber("Right Encoder Value", rightEncoder.get());
 		SmartDashboard.putNumber("Left Encoder Value", leftEncoder.get());
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			System.out.println("HELP!");
-		}
-		// **** JPW ****
+		SmartDashboard.putBoolean("top switch", switchTop.get());
+		SmartDashboard.putBoolean("bottom switch", switchBottom.get());
+
+		SmartDashboard.putNumber("left IR V",
+				infraredSensorLeft.getAverageVoltage());
+		SmartDashboard.putNumber("right IR V",
+				infraredSensorRight.getAverageVoltage());
+		
 	}
 
 	/**
@@ -372,14 +460,41 @@ public class Robot extends IterativeRobot {
 			talon3.set(-leftaxis);
 			talon4.set(-leftaxis);
 
-			// **** JPW disable ****
 		}
-		/*
-		 * } // **** JPW disable ****
-		 */
+		
 
 	}
 
+	public void elevatorDown() {
+		if (elevatorIndex < 0) {
+			elevatorIndex = Arrays.binarySearch(levels,
+					encoderToInches(elevatorEncoder.get()));
+			if (elevatorIndex < 0) { // Elevator index has changed by now. This
+										// is not a duplicate.
+				elevatorIndex = -1 - elevatorIndex;
+			}
+		}
+		if (elevatorIndex >= 1) {
+			elevatorIndex--;
+		}
+		elevatorControl.setSetpoint(levels[elevatorIndex]);
+		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+
+	}
+	
+	public void elevatorUp() {
+		if(elevatorIndex<0){
+			elevatorIndex=Arrays.binarySearch(levels,encoderToInches(elevatorEncoder.get()));
+			if (elevatorIndex<0){
+				elevatorIndex=-2-elevatorIndex;
+			}
+		}
+		if(elevatorIndex<levels.length-1){
+			elevatorIndex++;						
+		}
+		elevatorControl.setSetpoint(levels[elevatorIndex]);
+		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+	}
 	public void driveRobot(double left, double right) {
 
 		SmartDashboard.putNumber("Left Motors", left);
@@ -511,7 +626,25 @@ public class Robot extends IterativeRobot {
 			}
 		}
 	}
-	
+	public class IRPIDOutputLeft implements PIDOutput {
+		@Override
+		public void pidWrite(double output) {
+			SmartDashboard.putNumber("Left IR out", output);
+
+			talon3.set(output);
+			talon4.set(output);
+
+		}
+	}
+	public class IRPIDOutputRight implements PIDOutput {
+		@Override
+		public void pidWrite(double output) {
+			SmartDashboard.putNumber("Right IR out", output);
+			talon1.set(-output);
+			talon2.set(-output);
+
+		}
+	}	
 	public class InchesEncoder implements PIDSource {
 		PIDSource mySource;
 		
