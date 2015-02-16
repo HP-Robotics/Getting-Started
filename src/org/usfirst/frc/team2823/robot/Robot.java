@@ -90,7 +90,6 @@ public class Robot extends IterativeRobot {
 	final static double[] levels={0,2.8,10.25,17,17.8,32.8,47.8,52};
 	final static String[] LevelNames={"!B", "!T1", "!C1", "!C2", "!T2", "!T3", "!T4", "!C3"};
 	double myDriveTime=0.0;//0.6;
-	int elevatorIndex=0;
 
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
@@ -107,6 +106,8 @@ public class Robot extends IterativeRobot {
 	double shimmyPower = 1.0;
 	boolean rightStarted=false;
 	boolean leftStarted=false;
+	double elevatorOffset = levels[4];
+	int elevatorIndex = 4;
 	
 
 	/**
@@ -194,7 +195,6 @@ public class Robot extends IterativeRobot {
 	 * mode
 	 */
 	public void teleopInit() {
-		elevatorEncoder.reset();
 		myGyro.reset();
 		LiveWindow.setEnabled(false);
 		LEDSignboard.sendFile("HPPretty_legit.ppm");
@@ -216,6 +216,7 @@ public class Robot extends IterativeRobot {
 
 		if (!switchBottom.get() && switchBottomPressed){
 			elevatorEncoder.reset();
+			elevatorOffset = 0;
 		}
 		switchBottomPressed = switchBottom.get();
 		
@@ -418,7 +419,6 @@ public class Robot extends IterativeRobot {
 	 */
 	public void testInit() {
 		myGyro.reset();
-		elevatorEncoder.reset();
 		leftEncoder.reset();
 		rightEncoder.reset();
 		turningControl.disable();
@@ -582,11 +582,11 @@ public class Robot extends IterativeRobot {
 	}
 
 	public double inchesToEncoder(double i) {
-		return i * ENCODER_RESOLUTION / (2 * Math.PI * R * GEAR_RATIO);
+		return (i + elevatorOffset) * ENCODER_RESOLUTION / (2 * Math.PI * R * GEAR_RATIO);
 	}
 
 	public double encoderToInches(double e) {
-		return e * 2 * Math.PI * R * GEAR_RATIO /(ENCODER_RESOLUTION);
+		return (e * 2 * Math.PI * R * GEAR_RATIO /(ENCODER_RESOLUTION)) + elevatorOffset;
 	}
 	public double driveInchesToEncoder(double i) {
 		return i * ENCODER_RESOLUTION / (2 * Math.PI * DRIVE_R*DRIVE_RATIO);
