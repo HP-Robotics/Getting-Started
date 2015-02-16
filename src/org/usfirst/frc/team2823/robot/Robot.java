@@ -89,7 +89,7 @@ public class Robot extends IterativeRobot {
 	final static double[] distancesRight = new double[] { 0 };
 	final static double[] levels={0,2.8,10.25,17,17.8,32.8,47.8,52};
 	final static String[] LevelNames={"!B", "!T1", "!C1", "!C2", "!T2", "!T3", "!T4", "!C3"};
-	double myDriveTime=0.6;
+	double myDriveTime=0.0;//0.6;
 	int elevatorIndex=0;
 
 	boolean BAMUpPressed = false;
@@ -137,8 +137,12 @@ public class Robot extends IterativeRobot {
 		turningControl.setOutputRange(-100, 100);
 		leftDrivingControl = new PIDController(0.06, 0.0, 0.18, new DriveInchesEncoder(leftEncoder),
 				new PIDOutputClamp(new RightDrivePIDOutput(), 0.4));
-		rightDrivingControl = new PIDController(0.02, 0.0, 0.18, new DriveInchesEncoder(rightEncoder),
+		rightDrivingControl = new PIDController(0.06, 0.0, 0.18, new DriveInchesEncoder(rightEncoder),
 				new PIDOutputClamp(new LeftDrivePIDOutput(), 0.4));
+
+		leftDrivingControl.setPercentTolerance(10); // too high probably
+		rightDrivingControl.setPercentTolerance(10);
+
 
 		leftIRControl = new PIDController(1.000,0.015,5.000, infraredSensorLeft, new PIDOutputClamp(new IRPIDOutputLeft(), 0.4) );
 		rightIRControl = new PIDController(1.00,0.015,5.000, infraredSensorRight, new PIDOutputClamp(new IRPIDOutputRight(), 0.4) );
@@ -204,8 +208,8 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		//leftIRControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
 		//rightIRControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
-		leftDrivingControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
-		rightDrivingControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		//leftDrivingControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		//rightDrivingControl.setPID(SmartDashboard.getNumber("P"), SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
 
 		double axis1 = stick.getRawAxis(1);
 		double axis3 = stick.getRawAxis(3);
