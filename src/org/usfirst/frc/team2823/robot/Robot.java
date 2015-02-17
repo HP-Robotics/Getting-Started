@@ -304,28 +304,12 @@ public class Robot extends IterativeRobot {
 			if (stick.getPOV() == 180) {
 				if (shimmy >= 0) {
 					if (shimmy == 0) {
-
-						LEDSignboard.sendTextMessage("Shiver me timbers!!!!!!");
-						shimmy = 1;
-						shimmyCount = 0;
-						shimmyTime.start();
+						shimmyInit();
 					}
 					
-					if (shimmyTime.hasPeriodPassed(shimmyTimeout)) {
-						shimmyCount += 1;
-						if (shimmyCount > shimmyMaxCount)
-							shimmy = -1;
-						
-						if (shimmy == 1)
-							shimmy = 2;
-						else if (shimmy == 2)
-							shimmy = 1;
-						
-						if (shimmyCount == 3) {
-							elevatorUp();
-							elevatorControl.enable();
-						}	
-	
+					if(!doShimmy())
+					{
+						shimmy = -1;
 					}
 					
 					if (shimmy == 1)
@@ -340,8 +324,8 @@ public class Robot extends IterativeRobot {
 			}
 		
 			if (stick.getPOV()==0){
-				leftIRControl.setSetpoint(1.1);
-				rightIRControl.setSetpoint(1.1);
+				leftIRControl.setSetpoint(1.68);
+				rightIRControl.setSetpoint(1.68);
 
 				if (! leftIRControl.isEnable())
 				    LEDSignboard.sendTextMessage("Yarrr!!!");
@@ -595,6 +579,35 @@ public class Robot extends IterativeRobot {
 	public double driveEncoderToInches(double e) {
 		return e * 2 * Math.PI * DRIVE_R*DRIVE_RATIO/(ENCODER_RESOLUTION);
 	}	
+	
+	public void shimmyInit() {
+		LEDSignboard.sendTextMessage("Shiver me timbers!!!!!!");
+		shimmy = 1;
+		shimmyCount = 0;
+		shimmyTime.start();
+	}
+	
+	public boolean doShimmy()
+	{
+		if (shimmyTime.hasPeriodPassed(shimmyTimeout)) {
+			shimmyCount += 1;
+			if (shimmyCount > shimmyMaxCount)
+				return false;
+			
+			if (shimmy == 1)
+				shimmy = 2;
+			else if (shimmy == 2)
+				shimmy = 1;
+			
+			if (shimmyCount == 3) {
+				elevatorUp();
+				elevatorControl.enable();
+			}	
+
+		}
+		
+		return true;
+	}
 
 	public class GyroPIDOutput implements PIDOutput {
 
