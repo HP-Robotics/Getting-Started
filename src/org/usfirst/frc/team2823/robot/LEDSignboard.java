@@ -37,10 +37,16 @@ public class LEDSignboard {
 		rawCommand("file " + filename);
 	}
 	
+	private static String lastCommand;
 	public static void rawCommand(String command) {
+		
+		if (lastCommand == command)
+			return;
+		
 		if (singleton != null) {
 			try {
 				singleton.udp(command);
+				lastCommand = command;
 			} catch (IOException e) {
 				System.err.println("Error sending message to pi");
 				e.printStackTrace();

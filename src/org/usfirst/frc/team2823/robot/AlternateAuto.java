@@ -1,5 +1,7 @@
 package org.usfirst.frc.team2823.robot;
 
+import org.usfirst.frc.team2823.robot.Robot.ShimmyMode;
+
 import edu.wpi.first.wpilibj.Timer;
 
 
@@ -44,11 +46,7 @@ public class AlternateAuto implements AutoMode {
 			
 			System.out.printf("stage %d timed out\n", stage);
 
-			myBot.rightDrivingControl.disable();
-			myBot.leftDrivingControl.disable();
-			myBot.turningControl.disable();
-			myBot.rightIRControl.disable();
-			myBot.leftIRControl.disable();
+			myBot.disableAllPIDControllers();
 			
 			if (stageTimeoutFailure[stage]) {
 				System.out.printf("stage %d failed!\n", stage);
@@ -235,7 +233,7 @@ public class AlternateAuto implements AutoMode {
 				myBot.shimmyInit();
 			}
 			
-			if(!myBot.doShimmy())
+			if(myBot.doShimmy() == ShimmyMode.FINISHED)
 			{
 				myBot.elevatorUp();
 				myBot.elevatorUp();
