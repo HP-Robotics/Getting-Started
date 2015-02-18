@@ -80,16 +80,13 @@ public class Robot extends IterativeRobot {
 	double gyroResetAngle = -1;
 	double globalAngleDesired = -1;
 
-	final static double[] voltagesLeft = new double[] { 2.36, 2.18, 2.02, 1.87,
-			1.76, 1.66, 1.57, 1.49, 1.42, 1.36, 1.30, 1.24, 1.20, 1.15, 1.11,
-			1.07, 1.03, 0.99, 0.96, 0.93, 0.91, 0.89, 0.86, 0.83, 0.82, 0.81,
-			0.79, 0.77, 0.76, 0.75, 0.73 };
-	final static double[] distancesLeft = new double[] { 10, 11, 12, 13, 14,
-			15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-			32, 33, 34, 35, 36, 37, 38, 39, 40 };
+	final static double[] voltagesLeft = new double[] {1.79,1.64,1.38,1.24,1.13,1.03,0.93,0.88,0.82,0.78,0.73,0.67,0.61,0.58,0.56,0.54,0.52,0.50,0.49,0.48};
+	final static double[] distancesLeft = new double[] {0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
 
-	final static double[] voltagesRight = new double[] {};
-	final static double[] distancesRight = new double[] { 0 };
+	final static double[] voltagesRight = new double[] {1.80,1.50,1.37,1.22,1.11,1.02,0.90,0.89,0.83,0.78,0.73,0.69,0.63,0.60,0.56,0.53,0.460,0.39,0.37,0.34};
+	final static double[] distancesRight = new double[] {0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
+	
+	
 	final static double[] levels = { 0, 2.8, 10.25, 17, 17.8, 32.8, 47.8, 52 };
 	final static String[] LevelNames = { "!B", "!T1", "!C1", "!C2", "!T2",
 			"!T3", "!T4", "!C3" };
@@ -140,31 +137,37 @@ public class Robot extends IterativeRobot {
 		elevatorControl = new PIDController(0.4, 0.0, 0.0, new InchesEncoder(
 				elevatorEncoder), new SwitchOverride(new PIDOutputClamp(victor,
 				1.0)));
+		// 0.4 clamp value may be better.
 		turningControl = new PIDController(2.0, 0.0, 6.0, myGyro,
-				new PIDOutputClamp(new GyroPIDOutput(), 0.4 * 100));
+				new PIDOutputClamp(new GyroPIDOutput(), 0.6 * 100));
 		turningControl.setPercentTolerance(2);
 		turningControl.setOutputRange(-100, 100);
-		leftDrivingControl = new PIDController(0.06, 0.0, 0.18,
+		leftDrivingControl = new PIDController(0.06, 0.0, 0.30,
 				new DriveInchesEncoder(leftEncoder), new PIDOutputClamp(
-						new RightDrivePIDOutput(), 0.4));
-		rightDrivingControl = new PIDController(0.06, 0.0, 0.18,
+						new RightDrivePIDOutput(), 0.5));
+		rightDrivingControl = new PIDController(0.06, 0.0, 0.30,
 				new DriveInchesEncoder(rightEncoder), new PIDOutputClamp(
-						new LeftDrivePIDOutput(), 0.4));
+						new LeftDrivePIDOutput(), 0.5));
 
 		leftDrivingControl.setPercentTolerance(10); // too high probably
 		rightDrivingControl.setPercentTolerance(10);
 
-		leftIRControl = new PIDController(1.000, 0.015, 5.000,
-				infraredSensorLeft, new PIDOutputClamp(new IRPIDOutputLeft(),
+		leftIRControl = new PIDController(0.125, 0.001, 0.400,
+				new IRPIDSource(infraredSensorLeft, distancesLeft, voltagesLeft), new PIDOutputClamp(new IRPIDOutputLeft(),
 						0.4));
-		rightIRControl = new PIDController(1.00, 0.015, 5.000,
-				infraredSensorRight, new PIDOutputClamp(new IRPIDOutputRight(),
+		rightIRControl = new PIDController(0.125, 0.001, 0.400,
+				new IRPIDSource(infraredSensorRight, distancesRight, voltagesRight), new PIDOutputClamp(new IRPIDOutputRight(),
 						0.4));
 
 		SmartDashboard.putNumber("P", 0.06);
-		SmartDashboard.putNumber("I", 0);
+		SmartDashboard.putNumber("I", 0.000);
 		SmartDashboard.putNumber("D", 0.18);
 		SmartDashboard.putNumber("Auto Drive Time", myDriveTime);
+		SmartDashboard.putNumber("Shimmy Max Count", 5);
+		SmartDashboard.putNumber("Shimmy Power", 1.0);
+		SmartDashboard.putNumber("Shimmy Timeout", 0.05);
+		SmartDashboard.putNumber(
+				"Shimmy Elevator Start", 3);
 		autoChooser = new SendableChooser();
 		autoChooser.addDefault("Default", new DefaultAuto(this));
 		autoChooser.addObject("Alternate", new AlternateAuto(this));
@@ -216,20 +219,22 @@ public class Robot extends IterativeRobot {
 		myGyro.reset();
 		LiveWindow.setEnabled(false);
 		LEDSignboard.sendFile("HPPretty_legit.ppm");
+		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
+
 	}
 
 	/**
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		// leftIRControl.setPID(SmartDashboard.getNumber("P"),
-		// SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
-		// rightIRControl.setPID(SmartDashboard.getNumber("P"),
-		// SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
-		// leftDrivingControl.setPID(SmartDashboard.getNumber("P"),
-		// SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
-		// rightDrivingControl.setPID(SmartDashboard.getNumber("P"),
-		// SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		//leftIRControl.setPID(SmartDashboard.getNumber("P"),
+		//SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		//rightIRControl.setPID(SmartDashboard.getNumber("P"),
+		//SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		 //leftDrivingControl.setPID(SmartDashboard.getNumber("P"),
+		 //SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		 //rightDrivingControl.setPID(SmartDashboard.getNumber("P"),
+		 //SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
 
 		updateShimmyConstants();
 
@@ -248,9 +253,9 @@ public class Robot extends IterativeRobot {
 				if (!leftDrivingControl.isEnable()) {
 					leftEncoder.reset();
 					rightEncoder.reset();
-					leftDrivingControl.setSetpoint(-12 * 4);
+					leftDrivingControl.setSetpoint(-81);
 					leftDrivingControl.enable();
-					rightDrivingControl.setSetpoint(12 * 4);
+					rightDrivingControl.setSetpoint(81);
 					rightDrivingControl.enable();
 				}
 			} else if (leftDrivingControl.isEnable()) {
@@ -334,6 +339,7 @@ public class Robot extends IterativeRobot {
 						axis1 = -1 * shimmyPower;
 					if (shimmy == ShimmyMode.RIGHT)
 						axis3 = -1 * shimmyPower;
+					System.out.println(shimmy);
 				}
 
 			} else {
@@ -341,8 +347,8 @@ public class Robot extends IterativeRobot {
 			}
 
 			if (stick.getPOV() == 0) {
-				leftIRControl.setSetpoint(1.68);
-				rightIRControl.setSetpoint(1.68);
+				leftIRControl.setSetpoint(0.5);
+				rightIRControl.setSetpoint(0.5);
 
 				if (!leftIRControl.isEnable())
 					LEDSignboard.sendTextMessage("Yarrr!!!");
@@ -384,38 +390,8 @@ public class Robot extends IterativeRobot {
 				driveRobot(axis1 * MAX_DRIVE_SPEED, axis3 * MAX_DRIVE_SPEED);
 			}
 		}
-		SmartDashboard.putNumber("Talon1 Motors", talon1.get());
-		SmartDashboard.putNumber("Talon3 Motors", talon3.get());
-		SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
-		SmartDashboard.putNumber("Elevator Encoder Value",
-				(double) elevatorEncoder.get());
-		SmartDashboard.putNumber("Elevator Inches",
-				(double) encoderToInches(elevatorEncoder.get()));
-		SmartDashboard.putNumber("ELEVATOR SETPOINT",
-				elevatorControl.getSetpoint());
-		SmartDashboard.putNumber("ELEVATOR OUTPUT", elevatorControl.get());
-		SmartDashboard.putNumber(
-				"Left Infrared Value",
-				voltageToDistance(infraredSensorLeft.getVoltage(),
-						voltagesLeft, distancesLeft));
-		SmartDashboard.putNumber(
-				"Left Infrared Value",
-				voltageToDistance(infraredSensorRight.getVoltage(),
-						voltagesRight, distancesRight));
-		SmartDashboard.putNumber("Right Encoder Value", rightEncoder.get());
-		SmartDashboard.putNumber("Right Encoder Inches",
-				driveEncoderToInches(rightEncoder.get()));
-		SmartDashboard.putNumber("Left Encoder Value", leftEncoder.get());
-		SmartDashboard.putNumber("Left Encoder Inches",
-				driveEncoderToInches(leftEncoder.get()));
-		SmartDashboard.putBoolean("top switch", switchTop.get());
-		SmartDashboard.putBoolean("bottom switch", switchBottom.get());
 
-		SmartDashboard.putNumber("left IR V",
-				infraredSensorLeft.getAverageVoltage());
-		SmartDashboard.putNumber("right IR V",
-				infraredSensorRight.getAverageVoltage());
-
+		sendUsefulValues();
 	}
 
 	/**
@@ -434,29 +410,6 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void testPeriodic() {
-		SmartDashboard.putNumber("leftEncoder", leftEncoder.get());
-		SmartDashboard.putNumber("rightEncoder", rightEncoder.get());
-		SmartDashboard.putNumber("Left Setpoint",
-				leftDrivingControl.getSetpoint());
-		SmartDashboard
-				.putBoolean("In tolerance", leftDrivingControl.onTarget());
-		SmartDashboard.putNumber("elevatorEncoder", elevatorEncoder.get());
-		SmartDashboard.putNumber("gyro angle", myGyro.getAngle());
-		SmartDashboard.putNumber("gyro rate", myGyro.getRate());
-		SmartDashboard.putNumber("Gyro Input", gyroInput.getVoltage());
-
-		SmartDashboard.putBoolean("Switch Top", switchTop.get());
-		SmartDashboard.putBoolean("Switch Bottom", switchBottom.get());
-
-		SmartDashboard.putNumber("left IR cm", leftIRToDistance());
-		SmartDashboard.putNumber("right IR cm", rightIRToDistance());
-		SmartDashboard.putNumber("left IR V",
-				infraredSensorLeft.getAverageVoltage());
-		SmartDashboard.putNumber("right IR V",
-				infraredSensorRight.getAverageVoltage());
-
-		SmartDashboard.putBoolean("top switch", switchTop.get());
-
 		double leftaxis = stick.getRawAxis(1);
 		// leftaxis = Math.min(Math.abs(leftaxis), 0.25) *
 		// Math.signum(leftaxis);
@@ -522,7 +475,8 @@ public class Robot extends IterativeRobot {
 			elevatorIndex--;
 		}
 		elevatorControl.setSetpoint(levels[elevatorIndex]);
-		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+		// LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
 
 	}
 
@@ -538,16 +492,11 @@ public class Robot extends IterativeRobot {
 			elevatorIndex++;
 		}
 		elevatorControl.setSetpoint(levels[elevatorIndex]);
-		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+		// LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
 	}
 
 	public void driveRobot(double left, double right) {
-
-		SmartDashboard.putNumber("Left Motors", left);
-		SmartDashboard.putNumber("Right Motors", right);
-		SmartDashboard.putNumber("Global Angle Desired", globalAngleDesired);
-		SmartDashboard.putNumber("Straight Mode Heading", gyroResetAngle);
-
 		talon1.set(right);
 		talon2.set(right);
 		// Values are multiplied by -1 to ensure that the motors on the right
@@ -625,8 +574,6 @@ public class Robot extends IterativeRobot {
 				else if (shimmy == ShimmyMode.RIGHT)
 					shimmy = ShimmyMode.LEFT;
 			}
-		} else {
-			shimmy = ShimmyMode.FINISHED;
 		}
 
 		return shimmy;
@@ -642,11 +589,45 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void updateShimmyConstants() {
-		shimmyMaxCount = (int) SmartDashboard.getNumber("Shimmy Max Count", 5);
+		shimmyMaxCount = (int) SmartDashboard.getNumber("Shimmy Max Count", 8);
 		shimmyPower = SmartDashboard.getNumber("Shimmy Power", 1.0);
-		shimmyTimeout = SmartDashboard.getNumber("Shimmy Timeout", 2.0);
+		shimmyTimeout = SmartDashboard.getNumber("Shimmy Timeout", 0.08);
 		shimmyElevatorStart = (int) SmartDashboard.getNumber(
-				"Shimmy Elevator Start", 6);
+				"Shimmy Elevator Start", 3);
+	}
+
+	public void sendUsefulValues() {
+		// SmartDashboard.putNumber("Talon1 Motors", talon1.get());
+		// SmartDashboard.putNumber("Talon3 Motors", talon3.get());
+		SmartDashboard.putNumber("Gyro Value", myGyro.getAngle());
+		SmartDashboard.putNumber("Elevator Encoder Value",
+				(double) elevatorEncoder.get());
+		SmartDashboard.putNumber("Elevator Inches",
+				(double) encoderToInches(elevatorEncoder.get()));
+		// SmartDashboard.putNumber("ELEVATOR SETPOINT",
+		// elevatorControl.getSetpoint());
+		// SmartDashboard.putNumber("ELEVATOR OUTPUT", elevatorControl.get());
+		SmartDashboard.putNumber(
+				"Left Infrared Distance",
+				voltageToDistance(infraredSensorLeft.getVoltage(),
+						voltagesLeft, distancesLeft));
+		SmartDashboard.putNumber(
+				"Right Infrared Distance",
+				voltageToDistance(infraredSensorRight.getVoltage(),
+						voltagesRight, distancesRight));
+		SmartDashboard.putNumber("Left IR V",
+				infraredSensorLeft.getAverageVoltage());
+		SmartDashboard.putNumber("Right IR V",
+				infraredSensorRight.getAverageVoltage());
+		
+		SmartDashboard.putNumber("Right Encoder Value", rightEncoder.get());
+		SmartDashboard.putNumber("Right Encoder Inches",
+				driveEncoderToInches(rightEncoder.get()));
+		SmartDashboard.putNumber("Left Encoder Value", leftEncoder.get());
+		SmartDashboard.putNumber("Left Encoder Inches",
+				driveEncoderToInches(leftEncoder.get()));
+		SmartDashboard.putBoolean("Top switch", switchTop.get());
+		SmartDashboard.putBoolean("Bottom switch", switchBottom.get());
 	}
 
 	public class GyroPIDOutput implements PIDOutput {
@@ -732,8 +713,8 @@ public class Robot extends IterativeRobot {
 		public void pidWrite(double output) {
 			SmartDashboard.putNumber("Left IR out", output);
 
-			talon3.set(output);
-			talon4.set(output);
+			talon3.set(-output);
+			talon4.set(-output);
 
 		}
 	}
@@ -742,8 +723,8 @@ public class Robot extends IterativeRobot {
 		@Override
 		public void pidWrite(double output) {
 			SmartDashboard.putNumber("Right IR out", output);
-			talon1.set(-output);
-			talon2.set(-output);
+			talon1.set(output);
+			talon2.set(output);
 
 		}
 	}
@@ -771,6 +752,25 @@ public class Robot extends IterativeRobot {
 		@Override
 		public double pidGet() {
 			return driveEncoderToInches(mySource.pidGet());
+		}
+		
+	}
+	
+	public class IRPIDSource implements PIDSource {
+		PIDSource mySource;
+		double[] distances;
+		double[] voltages;
+		
+		public IRPIDSource(PIDSource mySource, double[] distances, double[] voltages){
+			
+			this.distances = distances;
+			this.voltages = voltages;
+			this.mySource = mySource;
+			
+		}
+		public double pidGet() {
+			return voltageToDistance(mySource.pidGet(),
+					voltages, distances);
 		}
 	}
 }

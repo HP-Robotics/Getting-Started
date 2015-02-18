@@ -4,11 +4,12 @@ import org.usfirst.frc.team2823.robot.Robot.ShimmyMode;
 
 import edu.wpi.first.wpilibj.Timer;
 
-
+// total 1: 7.628
+// total 2: 
 public class AlternateAuto implements AutoMode {
 	Robot myBot;
 	
-	double 	stageTimeouts[] = {0.5, 2.0, 2.0, 3.0, 0.5, 2.0, 1.5, 0.5};
+	double 	stageTimeouts[] = {0.1, 2.0, 2.0, 3.0, 0.1, 1.5, 0.75, 0.5};
 	int     stageCounts[] = {0, 0, 0, 0, 0, 0, 0, 0 };
 	boolean stageTimeoutFailure[] = { false, false, false, false, false, false, false, false };
 	int ontarget;
@@ -113,7 +114,7 @@ public class AlternateAuto implements AutoMode {
 				ontarget = 0;
 			}
 			
-			if (Math.abs(myBot.myGyro.getAngle() - 90) < 3)
+			if (Math.abs(myBot.myGyro.getAngle() - 90) < 6)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -181,7 +182,7 @@ public class AlternateAuto implements AutoMode {
 				ontarget = 0;
 			}
 			
-			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < 3)
+			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < 6)
 				ontarget++;
 			else
 				ontarget = 0;
