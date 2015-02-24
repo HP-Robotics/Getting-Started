@@ -169,9 +169,10 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber(
 				"Shimmy Elevator Start", 3);
 		autoChooser = new SendableChooser();
-		autoChooser.addDefault("Default", new DefaultAuto(this));
-		autoChooser.addObject("Alternate", new AlternateAuto(this));
-		SmartDashboard.putData("Auto Mode", autoChooser);
+		autoChooser.addDefault("One Tote, One Can", new DefaultAuto(this));
+		autoChooser.addObject("Three-Tote", new AlternateAuto(this));
+		autoChooser.addObject("Do Nothing", new EmptyAuto());
+		SmartDashboard.putData("Autonomous Mode", autoChooser);
 
 		// LiveWindow.addActuator("Talons", "Talon1", talon1);
 		// LiveWindow.addActuator("Talons", "Talon2", talon2);

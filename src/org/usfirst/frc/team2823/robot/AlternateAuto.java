@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.Timer;
 public class AlternateAuto implements AutoMode {
 	Robot myBot;
 	
-	double 	stageTimeouts[] = {0.1, 2.0, 2.0, 3.0, 0.1, 1.5, 0.75, 0.5};
+	double 	stageTimeouts[] = {0.1, 2.0, 2.0, 3.0, 0.1, 1.5, 0.75, 0.5}; //lift back turn drive lift turn align shimmy/lift
 	int     stageCounts[] = {0, 0, 0, 0, 0, 0, 0, 0 };
 	boolean stageTimeoutFailure[] = { false, false, false, false, false, false, false, false };
 	int ontarget;
