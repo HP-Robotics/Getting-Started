@@ -87,9 +87,8 @@ public class Robot extends IterativeRobot {
 	final static double[] distancesRight = new double[] {0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
 	
 	
-	final static double[] levels = { 0, 2.8, 10.25, 17, 17.8, 32.8, 47.8, 52 };
-	final static String[] LevelNames = { "!B", "!T1", "!C1", "!C2", "!T2",
-			"!T3", "!T4", "!C3" };
+	final static double[] levels = { 0,6.443, 8.864,11.270, 26.597, 44.477, 54.507};
+	final static String[] LevelNames = { "!B","!C1", "!T1","!C2", "!T2", "!T3", "!TP"};
 	double myDriveTime = 0.0;// 0.6;
 
 	boolean BAMUpPressed = false;
@@ -106,8 +105,8 @@ public class Robot extends IterativeRobot {
 
 	boolean rightStarted = false;
 	boolean leftStarted = false;
-	double elevatorOffset = levels[4];
-	int elevatorIndex = 4;
+	double elevatorOffset = levels[2];
+	int elevatorIndex = 2;
 
 	double shimmyTimeout = 0.05;
 	int shimmyMaxCount = 5;
@@ -219,8 +218,15 @@ public class Robot extends IterativeRobot {
 		disableAllPIDControllers();
 		myGyro.reset();
 		LiveWindow.setEnabled(false);
-		LEDSignboard.sendFile("HPPretty_legit.ppm");
-		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
+		//LEDSignboard.sendFile("HPPretty_legit.ppm");
+		if (elevatorIndex>=0){
+			SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
+			
+			
+		}
+		else{
+			SmartDashboard.putString("Elevator Level","!??");
+		}
 
 	}
 
@@ -287,7 +293,13 @@ public class Robot extends IterativeRobot {
 			} else {
 				BAMDownPressed = false;
 			}
-
+			double speedyLift=1.0;
+			if(stick.getRawButton(2)){
+				speedyLift=2.0;
+			}
+			else{
+				speedyLift=1.0;
+			}
 			// ***** RAW ELEVATOR CONTROL *****
 			if (stick.getRawButton(5)) {
 				elevatorIndex = -1;
@@ -295,21 +307,22 @@ public class Robot extends IterativeRobot {
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
 				}
+				
 				if (!switchTop.get()) {
-					victor.set(RAW_ELEVATOR_STEP);
-				} else {
+					victor.set(RAW_ELEVATOR_STEP*speedyLift);
+				} 
+				else {
 					victor.set(0);
 				}
 			} else if (stick.getRawButton(7)) {
 				elevatorIndex = -1;
-
 				LEDSignboard.rawCommand("files down");
 				if (elevatorControl.isEnable()) {
 					elevatorControl.disable();
 
 				}
 				if (!switchBottom.get()) {
-					victor.set(-RAW_ELEVATOR_STEP);
+					victor.set(-RAW_ELEVATOR_STEP*speedyLift);
 
 				} else {
 					victor.set(0);
@@ -476,7 +489,7 @@ public class Robot extends IterativeRobot {
 			elevatorIndex--;
 		}
 		elevatorControl.setSetpoint(levels[elevatorIndex]);
-		// LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
 		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
 
 	}
@@ -493,7 +506,7 @@ public class Robot extends IterativeRobot {
 			elevatorIndex++;
 		}
 		elevatorControl.setSetpoint(levels[elevatorIndex]);
-		// LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
+		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
 		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
 	}
 
