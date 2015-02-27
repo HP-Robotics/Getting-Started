@@ -80,11 +80,11 @@ public class Robot extends IterativeRobot {
 	double gyroResetAngle = -1;
 	double globalAngleDesired = -1;
 
-	final static double[] voltagesLeft = new double[] {1.79,1.64,1.38,1.24,1.13,1.03,0.93,0.88,0.82,0.78,0.73,0.67,0.61,0.58,0.56,0.54,0.52,0.50,0.49,0.48};
-	final static double[] distancesLeft = new double[] {0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
+	final static double[] voltagesLeft = new double[] {2.0,1.79,1.64,1.38,1.24,1.13,1.03,0.93,0.88,0.82,0.78,0.73,0.67,0.61,0.58,0.56,0.54,0.52,0.50,0.49,0.48};
+	final static double[] distancesLeft = new double[] {-0.5,0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
 
-	final static double[] voltagesRight = new double[] {1.80,1.50,1.37,1.22,1.11,1.02,0.90,0.89,0.83,0.78,0.73,0.69,0.63,0.60,0.56,0.53,0.460,0.39,0.37,0.34};
-	final static double[] distancesRight = new double[] {0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
+	final static double[] voltagesRight = new double[] {2.0,1.80,1.50,1.37,1.22,1.11,1.02,0.90,0.89,0.83,0.78,0.73,0.69,0.63,0.60,0.56,0.53,0.460,0.39,0.37,0.34};
+	final static double[] distancesRight = new double[] {-0.5,0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
 	
 	
 	final static double[] levels = { 0,6.443, 8.864,11.270, 26.597, 44.477, 54.507};
@@ -168,9 +168,9 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber(
 				"Shimmy Elevator Start", 3);
 		autoChooser = new SendableChooser();
-		autoChooser.addDefault("One Tote, One Can", new DefaultAuto(this));
-		autoChooser.addObject("Three-Tote", new AlternateAuto(this));
-		autoChooser.addObject("Do Nothing", new EmptyAuto());
+		autoChooser.addDefault("Default: 2 Totes", new DefaultAuto(this));
+		autoChooser.addObject("Alternate: Move 72 inches", new AlternateAuto(this));
+		autoChooser.addObject("Empty: Do Nothing", new EmptyAuto());
 		SmartDashboard.putData("Autonomous Mode", autoChooser);
 
 		// LiveWindow.addActuator("Talons", "Talon1", talon1);
@@ -537,8 +537,11 @@ public class Robot extends IterativeRobot {
 			i++;
 		}
 
-		if (i == 0 || i >= voltages.length) {
-			return Double.NaN;
+		if (i == 0) {
+			return -1;
+		}
+		if (i>= voltages.length){
+			return 40;
 		}
 
 		double d2 = distances[i];

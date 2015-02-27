@@ -9,9 +9,9 @@ import edu.wpi.first.wpilibj.Timer;
 public class AlternateAuto implements AutoMode {
 	Robot myBot;
 	
-	double 	stageTimeouts[] = {0.1, 2.0, 2.0, 3.0, 0.1, 1.5, 0.75, 0.5}; //lift back turn drive lift turn align shimmy/lift
-	int     stageCounts[] = {0, 0, 0, 0, 0, 0, 0, 0 };
-	boolean stageTimeoutFailure[] = { false, false, false, false, false, false, false, false };
+	double 	stageTimeouts[] = {2.0}; //lift back turn drive lift turn align shimmy/lift
+	int     stageCounts[] = {0};
+	boolean stageTimeoutFailure[] = { false };
 	int ontarget;
 	int stage = 0;
 	Timer tick;
@@ -62,24 +62,15 @@ public class AlternateAuto implements AutoMode {
 			return;
 		}
 		
-		// pick up a tote
+		//drive forward 72 inches
 		if (stage == 0) {
-			if(stageCounts[stage] == 0) {
-				myBot.elevatorControl.enable();
-				myBot.elevatorUp();
-				System.out.println("stage 0 succeeded!");
-			}
-		}
-		
-		//drive back 12 inches
-		if (stage == 1) {
 			
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(12);
+				myBot.leftDrivingControl.setSetpoint(-72);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(-12);
+				myBot.rightDrivingControl.setSetpoint(72);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 			}
@@ -87,7 +78,7 @@ public class AlternateAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 			
-			if ((Math.abs(r - (-12)) < 2) && (Math.abs(l - 12) < 2))
+			if ((Math.abs(r - (72)) < 2) && (Math.abs(l - (-72)) < 2))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -103,146 +94,6 @@ public class AlternateAuto implements AutoMode {
 				return;
 			}
 			
-		}
-		
-		// turn right 90 degrees
-		if (stage == 2) {
-			if (stageCounts[stage] == 0) {
-				myBot.myGyro.reset();
-				myBot.turningControl.setSetpoint(90);
-				myBot.turningControl.enable();
-				ontarget = 0;
-			}
-			
-			if (Math.abs(myBot.myGyro.getAngle() - 90) < 6)
-				ontarget++;
-			else
-				ontarget = 0;
-			
-			if (ontarget > 10) {
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				myBot.turningControl.disable();
-				System.out.println("stage 2 succeeded!");
-				tick.reset();
-				stage++;
-				return;
-			}
-			
-		}
-		
-		//drive forward 81 inches
-		if (stage == 3) {
-			
-			if (stageCounts[stage] == 0) {
-				myBot.leftEncoder.reset();
-				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-81);
-				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(81);
-				myBot.rightDrivingControl.enable();
-				ontarget = 0;
-			}
-			
-			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
-			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
-			
-			if ((Math.abs(r - 81) < 2) && (Math.abs(l - (-81)) < 2))
-				ontarget++;
-			else
-				ontarget = 0;
-			
-			if (ontarget > 10) {
-				tick.reset();
-				myBot.rightDrivingControl.disable();
-				myBot.leftDrivingControl.disable();
-				System.out.println("stage 3 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
-			}
-			
-		}
-		
-		// go up a level
-		if (stage == 4) {
-			if(stageCounts[stage] == 0) {
-				myBot.elevatorUp();
-				System.out.println("stage 4 succeeded!");
-			}
-		}
-		
-		// turn left 90 degrees
-		if (stage == 5) {
-			if (stageCounts[stage] == 0) {
-				myBot.myGyro.reset();
-				myBot.turningControl.setSetpoint(-90);
-				myBot.turningControl.enable();
-				ontarget = 0;
-			}
-			
-			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < 6)
-				ontarget++;
-			else
-				ontarget = 0;
-			
-			if (ontarget > 10) {
-				tick.reset();
-				myBot.turningControl.disable();
-				System.out.println("stage 5 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
-			}
-			
-		}
-		
-		//approach the tote
-		if (stage == 6) {
-			
-			if (stageCounts[stage] == 0) {
-				myBot.leftIRControl.setSetpoint(1.68);
-				myBot.rightIRControl.setSetpoint(1.68);
-				myBot.leftIRControl.enable();
-				myBot.rightIRControl.enable();
-				ontarget = 0;
-			}
-			
-			if ((Math.abs(myBot.infraredSensorLeft.getAverageVoltage() - (1.68)) < 0.1) && (Math.abs(myBot.infraredSensorRight.getAverageVoltage() - 1.68) < 0.1))
-				ontarget++;
-			else
-				ontarget = 0;
-			
-			if (ontarget > 10) {
-				tick.reset();
-				myBot.rightIRControl.disable();
-				myBot.leftIRControl.disable();
-				System.out.println("stage 6 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
-			}
-			
-		}
-		
-		// pick up tote #2
-		if (stage == 7) {
-			if(stageCounts[stage] == 0) {
-				myBot.shimmyInit();
-			}
-			
-			if(myBot.doShimmy() == ShimmyMode.FINISHED)
-			{
-				myBot.elevatorUp();
-				myBot.elevatorUp();
-				System.out.println("stage 7 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-			}
 		}
 		
 		stageCounts[stage]++;
