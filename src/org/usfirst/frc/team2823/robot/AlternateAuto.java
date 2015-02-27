@@ -9,9 +9,9 @@ import edu.wpi.first.wpilibj.Timer;
 public class AlternateAuto implements AutoMode {
 	Robot myBot;
 	
-	double 	stageTimeouts[] = {2.0}; //lift back turn drive lift turn align shimmy/lift
-	int     stageCounts[] = {0};
-	boolean stageTimeoutFailure[] = { false };
+	double 	stageTimeouts[] = {4.0, 2.0}; //lift back turn drive lift turn align shimmy/lift
+	int     stageCounts[] = {0, 0};
+	boolean stageTimeoutFailure[] = { false, false };
 	int ontarget;
 	int stage = 0;
 	Timer tick;
@@ -68,9 +68,9 @@ public class AlternateAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-72);
+				myBot.leftDrivingControl.setSetpoint(-myBot.myDriveDistance);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(72);
+				myBot.rightDrivingControl.setSetpoint(myBot.myDriveDistance);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 			}
@@ -78,11 +78,44 @@ public class AlternateAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 			
-			if ((Math.abs(r - (72)) < 2) && (Math.abs(l - (-72)) < 2))
+			if ((Math.abs(r - (myBot.myDriveDistance)) < 2) && (Math.abs(l - (-myBot.myDriveDistance)) < 2))
 				ontarget++;
 			else
 				ontarget = 0;
 			
+			if (ontarget > 10) {
+				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
+				tick.reset();
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				System.out.println("stage 0 succeeded!");
+				tick.reset();
+				stage++;
+				return;
+			}
+		}
+			
+			//drive back pi inches
+		if (stage == 1) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(Math.PI);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-Math.PI);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-Math.PI)) < 2) && (Math.abs(l - (Math.PI)) < 2))
+				ontarget++;
+			else
+				ontarget = 0;
+
 			if (ontarget > 10) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
@@ -93,7 +126,6 @@ public class AlternateAuto implements AutoMode {
 				stage++;
 				return;
 			}
-			
 		}
 		
 		stageCounts[stage]++;

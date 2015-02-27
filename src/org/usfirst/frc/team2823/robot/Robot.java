@@ -65,6 +65,8 @@ public class Robot extends IterativeRobot {
 
 	Gyro myGyro;
 	PIDController elevatorControl;
+	PIDController slowElevatorControl;
+
 	PIDController turningControl;
 	PIDController leftDrivingControl;
 	PIDController rightDrivingControl;
@@ -89,7 +91,7 @@ public class Robot extends IterativeRobot {
 	
 	final static double[] levels = { 0,6.443, 8.864,11.270, 26.597, 44.477, 54.507};
 	final static String[] LevelNames = { "!B","!C1", "!T1","!C2", "!T2", "!T3", "!TP"};
-	double myDriveTime = 0.0;// 0.6;
+	double myDriveDistance = 72.0;// 0.6;
 
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
@@ -136,6 +138,9 @@ public class Robot extends IterativeRobot {
 		elevatorControl = new PIDController(0.4, 0.0, 0.0, new InchesEncoder(
 				elevatorEncoder), new SwitchOverride(new PIDOutputClamp(victor,
 				1.0)));
+		slowElevatorControl = new PIDController(0.4, 0.0, 0.0, new InchesEncoder(
+				elevatorEncoder), new SwitchOverride(new PIDOutputClamp(victor,
+				0.7)));
 		// 0.4 clamp value may be better.
 		turningControl = new PIDController(2.0, 0.0, 6.0, myGyro,
 				new PIDOutputClamp(new GyroPIDOutput(), 0.6 * 100));
@@ -161,7 +166,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("P", 0.06);
 		SmartDashboard.putNumber("I", 0.000);
 		SmartDashboard.putNumber("D", 0.18);
-		SmartDashboard.putNumber("Auto Drive Time", myDriveTime);
+		SmartDashboard.putNumber("Auto Distance", myDriveDistance);
 		SmartDashboard.putNumber("Shimmy Max Count", 5);
 		SmartDashboard.putNumber("Shimmy Power", 1.0);
 		SmartDashboard.putNumber("Shimmy Timeout", 0.05);
@@ -196,7 +201,7 @@ public class Robot extends IterativeRobot {
 		disableAllPIDControllers();
 		autoLoopCounter = 0;
 		myGyro.reset();
-		myDriveTime = SmartDashboard.getNumber("Auto Drive Time");
+		myDriveDistance = SmartDashboard.getNumber("Auto Distance");
 		((AutoMode) autoChooser.getSelected()).autoInit();
 		LEDSignboard
 				.sendTextMessage("Initializing global domination routine...");
@@ -601,6 +606,7 @@ public class Robot extends IterativeRobot {
 		leftDrivingControl.disable();
 		turningControl.disable();
 		elevatorControl.disable();
+		slowElevatorControl.disable();
 		rightIRControl.disable();
 		leftIRControl.disable();
 	}

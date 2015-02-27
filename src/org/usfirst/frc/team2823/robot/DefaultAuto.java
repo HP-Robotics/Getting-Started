@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 1.0, 2.0, 2.0, 2.0, 1.5, 0.5, 2.0, 1.25, 1.0, 1.25, 0.5, }; // lift back
+	double stageTimeouts[] = { 1.0, 2.0, 2.0, 2.0, 1.5, 0.5, 2.0, 3.0, 1.0, 1.25, 0.5, }; // lift back
 																// turn drive
 																// lift turn
 																// align
@@ -223,7 +223,7 @@ public class DefaultAuto implements AutoMode {
 		// pick up tote #2
 		if (stage == 5) {
 			if (stageCounts[stage] == 0) {
-				myBot.shimmyInit();
+				myBot.shimmyInit(); 
 				
 			}
 
@@ -272,9 +272,10 @@ public class DefaultAuto implements AutoMode {
 		// put down totes
 		if (stage == 7) {
 			if (stageCounts[stage] == 0) {
-				myBot.elevatorControl.enable();
-				myBot.elevatorDown();
-				myBot.elevatorDown();
+				myBot.elevatorControl.disable();
+				myBot.slowElevatorControl.enable();
+				myBot.slowElevatorControl.setSetpoint(19.0);
+				myBot.elevatorIndex = -1;
 				System.out.println("stage 7 succeeded!");
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
 
@@ -285,6 +286,7 @@ public class DefaultAuto implements AutoMode {
 		if (stage == 8) {
 
 			if (stageCounts[stage] == 0) {
+				myBot.slowElevatorControl.disable();
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
 				myBot.leftDrivingControl.setSetpoint(-24);
