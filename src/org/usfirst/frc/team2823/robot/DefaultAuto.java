@@ -234,23 +234,25 @@ public class DefaultAuto implements AutoMode {
 				stage++;
 			}
 		}
-		// drive forward 81 inches
+		// drive forward 83 inches
 		if (stage == 6) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-81);
+				myBot.leftDrivingControl.setSetpoint(-83);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(81);
+				myBot.rightDrivingControl.setSetpoint(83);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
+				LEDSignboard.sendTextMessage("WALK THE PLANK!");
+
 			}
 
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 81) < 4) && (Math.abs(l - (-81)) < 4))
+			if ((Math.abs(r - 83) < 4) && (Math.abs(l - (-83)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -274,6 +276,8 @@ public class DefaultAuto implements AutoMode {
 				myBot.elevatorDown();
 				myBot.elevatorDown();
 				System.out.println("stage 7 succeeded!");
+				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
+
 			}
 		}
 		
@@ -288,6 +292,8 @@ public class DefaultAuto implements AutoMode {
 				myBot.rightDrivingControl.setSetpoint(24);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
+				LEDSignboard.sendTextMessage("YARRRRRR! ");
+
 			}
 
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
@@ -321,23 +327,25 @@ public class DefaultAuto implements AutoMode {
 			}
 		}
 		
-		// back up pi/4 inches
+		// back up 2 pi inches
 		if (stage == 10) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(Math.PI/4);
+				myBot.leftDrivingControl.setSetpoint(2*Math.PI);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(-Math.PI/4);
+				myBot.rightDrivingControl.setSetpoint(-2*Math.PI);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
+				LEDSignboard.sendTextMessage("F ARRRRR Sea! ");
+
 			}
 
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (-Math.PI/4)) < 4) && (Math.abs(l - (Math.PI/4)) < 4))
+			if ((Math.abs(r - (-2*Math.PI)) < 4) && (Math.abs(l - (2*Math.PI)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
