@@ -124,15 +124,15 @@ public class DefaultAuto implements AutoMode {
 
 		}
 
-		// drive forward 76 inches
+		// drive forward 78 inches
 		if (stage == 2) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-76);
+				myBot.leftDrivingControl.setSetpoint(-78);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(76);
+				myBot.rightDrivingControl.setSetpoint(78);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("GO! ");
@@ -142,7 +142,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 76) < 4) && (Math.abs(l - (-76)) < 4))
+			if ((Math.abs(r - 78) < 4) && (Math.abs(l - (-78)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;

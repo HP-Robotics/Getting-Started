@@ -11,8 +11,8 @@ public class AlternateAuto implements AutoMode {
 	
 	double 	stageTimeouts[] = {4.0, 2.0}; //lift back turn drive lift turn align shimmy/lift
 	int     stageCounts[] = {0, 0};
-	boolean stageTimeoutFailure[] = { false, false };
-	int ontarget;
+	boolean stageTimeoutFailure[] = { false, false
+	};	int ontarget;
 	int stage = 0;
 	Timer tick;
 	
