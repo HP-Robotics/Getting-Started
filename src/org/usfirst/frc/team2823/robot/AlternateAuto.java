@@ -62,7 +62,7 @@ public class AlternateAuto implements AutoMode {
 			return;
 		}
 		
-		//drive forward 72 inches
+		//drive forward 144 inches
 		if (stage == 0) {
 			
 			if (stageCounts[stage] == 0) {
@@ -95,23 +95,18 @@ public class AlternateAuto implements AutoMode {
 			}
 		}
 			
-			//drive back pi inches
+		// turn right 90 degrees
 		if (stage == 1) {
-
 			if (stageCounts[stage] == 0) {
-				myBot.leftEncoder.reset();
-				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(Math.PI);
-				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(-Math.PI);
-				myBot.rightDrivingControl.enable();
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(90);
+				myBot.turningControl.enable();
 				ontarget = 0;
+				LEDSignboard.sendTextMessage("TURN ");
+
 			}
 
-			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
-			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
-
-			if ((Math.abs(r - (-Math.PI)) < 2) && (Math.abs(l - (Math.PI)) < 2))
+			if (Math.abs(myBot.myGyro.getAngle() - 90) < 6)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -119,13 +114,13 @@ public class AlternateAuto implements AutoMode {
 			if (ontarget > 10) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
-				myBot.rightDrivingControl.disable();
-				myBot.leftDrivingControl.disable();
+				myBot.turningControl.disable();
 				System.out.println("stage 1 succeeded!");
 				tick.reset();
 				stage++;
 				return;
 			}
+
 		}
 		
 		stageCounts[stage]++;

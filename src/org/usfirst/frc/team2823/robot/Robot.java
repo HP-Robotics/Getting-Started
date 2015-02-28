@@ -91,7 +91,7 @@ public class Robot extends IterativeRobot {
 	
 	final static double[] levels = { 0,6.443, 8.864,11.270, 26.597, 44.477, 54.507};
 	final static String[] LevelNames = { "!B","!C1", "!T1","!C2", "!T2", "!T3", "!TP"};
-	double myDriveDistance = 72.0;// 0.6;
+	double myDriveDistance = 144.0;// 0.6;
 
 	boolean BAMUpPressed = false;
 	boolean BAMDownPressed = false;
@@ -107,8 +107,8 @@ public class Robot extends IterativeRobot {
 
 	boolean rightStarted = false;
 	boolean leftStarted = false;
-	double elevatorOffset = levels[2];
-	int elevatorIndex = 2;
+	double elevatorOffset = levels[4];
+	int elevatorIndex = 4;
 
 	double shimmyTimeout = 0.05;
 	int shimmyMaxCount = 5;

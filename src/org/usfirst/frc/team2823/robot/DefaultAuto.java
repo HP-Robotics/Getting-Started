@@ -9,13 +9,15 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 1.0, 2.0, 2.0, 2.0, 1.5, 0.5, 2.0, 3.0, 1.0, 1.25, 0.5, }; // lift back
-																// turn drive
-																// lift turn
-																// align
-													 		// shimmy/lift
-	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	boolean stageTimeoutFailure[] = { false, false, false, false, false, false, false, false, false, false, false };
+	double stageTimeouts[] = { 1.0, 2.0, 2.0, 2.0, 1.5, 3.5, 1.0, 1.25, 1.0 }; // lift
+																					// back
+	// turn drive
+	// lift turn
+	// align
+	// shimmy/lift
+	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	boolean stageTimeoutFailure[] = { false, false, false, false, false, false,
+			false, false, false };
 	int ontarget;
 	int stage = 0;
 	Timer tick;
@@ -88,11 +90,9 @@ public class DefaultAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.enable();
 				myBot.elevatorUp();
-				myBot.elevatorUp();
 				System.out.println("stage 0 succeeded!");
 				LEDSignboard.sendTextMessage("TOTE ");
 
-				
 			}
 		}
 
@@ -220,29 +220,15 @@ public class DefaultAuto implements AutoMode {
 
 		}
 
-		// pick up tote #2
+		// drive forward 144 inches
 		if (stage == 5) {
-			if (stageCounts[stage] == 0) {
-				myBot.shimmyInit(); 
-				
-			}
-
-			if (myBot.doShimmy() == ShimmyMode.FINISHED) {
-				System.out.println("stage 5 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-			}
-		}
-		// drive forward 83 inches
-		if (stage == 6) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-83);
+				myBot.leftDrivingControl.setSetpoint(-144);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(83);
+				myBot.rightDrivingControl.setSetpoint(144);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("WALK THE PLANK!");
@@ -252,7 +238,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 83) < 4) && (Math.abs(l - (-83)) < 4))
+			if ((Math.abs(r - 144) < 4) && (Math.abs(l - (-144)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -261,7 +247,7 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 6 succeeded!");
+				System.out.println("stage 5 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				stage++;
@@ -270,38 +256,65 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		// put down totes
-		if (stage == 7) {
+		if (stage == 6) {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.disable();
 				myBot.slowElevatorControl.enable();
-				myBot.slowElevatorControl.setSetpoint(19.0);
+				myBot.slowElevatorControl.setSetpoint(19);
 				myBot.elevatorIndex = -1;
-				System.out.println("stage 7 succeeded!");
+				System.out.println("stage 6 succeeded!");
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
 
 			}
 		}
+
+		// turn left 90 degrees
+		if (stage == 7) {
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(-90);
+				myBot.turningControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("PI OVER TWOOOOO! ");
+
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < 6)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > 10) {
+				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
+				tick.reset();
+				myBot.turningControl.disable();
+				System.out.println("stage 7 succeeded!");
+				tick.reset();
+				stage++;
+				return;
+			}
+
+		}
 		
-		// drive forward 24 inches
+		// drive forward pi inches
 		if (stage == 8) {
 
 			if (stageCounts[stage] == 0) {
-				myBot.slowElevatorControl.disable();
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-24);
+				myBot.leftDrivingControl.setSetpoint(-Math.PI);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(24);
+				myBot.rightDrivingControl.setSetpoint(Math.PI);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("YARRRRRR! ");
+				LEDSignboard.sendTextMessage("WALK THE PLANK!");
 
 			}
 
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 24) < 4) && (Math.abs(l - (-24)) < 4))
+			if ((Math.abs(r - Math.PI) < 4) && (Math.abs(l - (-Math.PI)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -318,63 +331,17 @@ public class DefaultAuto implements AutoMode {
 			}
 
 		}
-		
-		// move the elevator up 2 levels
-		if (stage == 9) {
-			if (stageCounts[stage] == 0) {
-				myBot.elevatorControl.enable();
-				myBot.elevatorUp();
-				myBot.elevatorUp();
-				System.out.println("stage 9 succeeded!");
-			}
-		}
-		
-		// back up 2 pi inches
-		if (stage == 10) {
 
-			if (stageCounts[stage] == 0) {
-				myBot.leftEncoder.reset();
-				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(2*Math.PI);
-				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(-2*Math.PI);
-				myBot.rightDrivingControl.enable();
-				ontarget = 0;
-				LEDSignboard.sendTextMessage("F ARRRRR Sea! ");
-
-			}
-
-			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
-			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
-
-			if ((Math.abs(r - (-2*Math.PI)) < 4) && (Math.abs(l - (2*Math.PI)) < 4))
-				ontarget++;
-			else
-				ontarget = 0;
-
-			if (ontarget > 10) {
-				tick.reset();
-				myBot.rightDrivingControl.disable();
-				myBot.leftDrivingControl.disable();
-				System.out.println("stage 10 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
-			}
-
-		}
-		
-		if(stage != stageLast)
-		{
+		if (stage != stageLast) {
 			stageTime.stop();
 			System.out.println("Stage time: " + stageTime.get());
 			stageTime.reset();
 			stageTime.start();
 		}
-		
+
 		stageLast = stage;
 		stageCounts[stage]++;
+
 	}
 
 }
