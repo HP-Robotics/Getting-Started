@@ -142,11 +142,11 @@ public class Robot extends IterativeRobot {
 				elevatorEncoder), new SwitchOverride(new PIDOutputClamp(victor,
 				0.7)));
 		// 0.4 clamp value may be better.
-		turningControl = new PIDController(2.0, 0.0, 6.0, myGyro,
+		turningControl = new PIDController(4.0, 0.01/1000, 14.0, myGyro,
 				new PIDOutputClamp(new GyroPIDOutput(), 0.6 * 100));
 		turningControl.setPercentTolerance(2);
 		turningControl.setOutputRange(-100, 100);
-		leftDrivingControl = new PIDController(0.06, 0.0, 0.30,
+		leftDrivingControl = new PIDController(0.06, 0.01/1000, 0.30,
 				new DriveInchesEncoder(leftEncoder), new PIDOutputClamp(
 						new RightDrivePIDOutput(), 0.5));
 		rightDrivingControl = new PIDController(0.06, 0.0, 0.30,
@@ -163,9 +163,9 @@ public class Robot extends IterativeRobot {
 				new IRPIDSource(infraredSensorRight, distancesRight, voltagesRight), new PIDOutputClamp(new IRPIDOutputRight(),
 						0.4));
 
-		SmartDashboard.putNumber("P", 0.06);
-		SmartDashboard.putNumber("I", 0.000);
-		SmartDashboard.putNumber("D", 0.18);
+		SmartDashboard.putNumber("P", 4.0);
+		SmartDashboard.putNumber("I", 0.01);
+		SmartDashboard.putNumber("D", 8.00);
 		SmartDashboard.putNumber("Auto Distance", myDriveDistance);
 		SmartDashboard.putNumber("Shimmy Max Count", 5);
 		SmartDashboard.putNumber("Shimmy Power", 1.0);
@@ -239,14 +239,14 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	public void teleopPeriodic() {
-		//leftIRControl.setPID(SmartDashboard.getNumber("P"),
-		//SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		//turningControl.setPID(SmartDashboard.getNumber("P"),
+		//SmartDashboard.getNumber("I")/1000, SmartDashboard.getNumber("D"));
 		//rightIRControl.setPID(SmartDashboard.getNumber("P"),
 		//SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
 		 //leftDrivingControl.setPID(SmartDashboard.getNumber("P"),
-		 //SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		 //SmartDashboard.getNumber("I")/1000, SmartDashboard.getNumber("D"));
 		 //rightDrivingControl.setPID(SmartDashboard.getNumber("P"),
-		 //SmartDashboard.getNumber("I"), SmartDashboard.getNumber("D"));
+		 //SmartDashboard.getNumber("I")/1000, SmartDashboard.getNumber("D"));
 
 		updateShimmyConstants();
 
