@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 1.0, 2.0, 2.0, 2.0, 1.5, 3.5, 1.0, 1.25, 1.0 }; // lift
+	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 1.5, 3.5, 1.0, 1.25, 1.0 }; // lift
 																					// back
 	// turn drive
 	// lift turn
@@ -98,6 +98,7 @@ public class DefaultAuto implements AutoMode {
 
 		// turn right 90 degrees
 		if (stage == 1) {
+			myBot.elevatorControl.enable();
 			if (stageCounts[stage] == 0) {
 				myBot.myGyro.reset();
 				myBot.turningControl.setSetpoint(90);
@@ -117,6 +118,7 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.turningControl.disable();
 				System.out.println("stage 1 succeeded!");
+				myBot.elevatorControl.disable();
 				tick.reset();
 				stage++;
 				return;
@@ -260,7 +262,7 @@ public class DefaultAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.disable();
 				myBot.slowElevatorControl.enable();
-				myBot.slowElevatorControl.setSetpoint(19);
+				myBot.slowElevatorControl.setSetpoint(19.4);
 				myBot.elevatorIndex = -1;
 				System.out.println("stage 6 succeeded!");
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
