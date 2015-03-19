@@ -588,7 +588,7 @@ public class Robot extends IterativeRobot {
 				shimmy = ShimmyMode.FINISHED;
 			else {
 				if (shimmyCount == shimmyElevatorStart) {
-					elevatorUp();
+					elevatorControl.setSetpoint(encoderToInches(elevatorEncoder.get()) + 6);
 					elevatorControl.enable();
 				}
 				if (shimmy == ShimmyMode.LEFT)
