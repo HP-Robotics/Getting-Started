@@ -89,8 +89,8 @@ public class Robot extends IterativeRobot {
 	final static double[] distancesRight = new double[] {-0.5,0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,24,28,32,36};
 	
 	
-	final static double[] levels = { 0,6.443, 8.864,11.270, 26.597, 44.477, 54.507};
-	final static String[] LevelNames = { "!B","!C1", "!T1","!C2", "!T2", "!T3", "!TP"};
+	final static double[] levels = { 0, 8.864, 26.597, 44.477, 54.507};
+	final static String[] levelNames = { "!B", "!T1", "!T2", "!T3", "!TP"};
 	double myDriveDistance = 144.0;// 0.6;
 
 	boolean BAMUpPressed = false;
@@ -225,7 +225,7 @@ public class Robot extends IterativeRobot {
 		LiveWindow.setEnabled(false);
 		//LEDSignboard.sendFile("HPPretty_legit.ppm");
 		if (elevatorIndex>=0){
-			SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
+			SmartDashboard.putString("Elevator Level", levelNames[elevatorIndex]);
 			
 			
 		}
@@ -298,12 +298,12 @@ public class Robot extends IterativeRobot {
 			} else {
 				BAMDownPressed = false;
 			}
-			double speedyLift=1.0;
+			double slowLift=2.0;
 			if(stick.getRawButton(2)){
-				speedyLift=2.0;
+				slowLift=1.0;
 			}
 			else{
-				speedyLift=1.0;
+				slowLift=2.0;
 			}
 			// ***** RAW ELEVATOR CONTROL *****
 			if (stick.getRawButton(5)) {
@@ -314,7 +314,7 @@ public class Robot extends IterativeRobot {
 				}
 				
 				if (!switchTop.get()) {
-					victor.set(RAW_ELEVATOR_STEP*speedyLift);
+					victor.set(RAW_ELEVATOR_STEP*slowLift);
 				} 
 				else {
 					victor.set(0);
@@ -327,7 +327,7 @@ public class Robot extends IterativeRobot {
 
 				}
 				if (!switchBottom.get()) {
-					victor.set(-RAW_ELEVATOR_STEP*speedyLift);
+					victor.set(-RAW_ELEVATOR_STEP*slowLift);
 
 				} else {
 					victor.set(0);
@@ -494,8 +494,8 @@ public class Robot extends IterativeRobot {
 			elevatorIndex--;
 		}
 		elevatorControl.setSetpoint(levels[elevatorIndex]);
-		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
-		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
+		LEDSignboard.sendTextMessage(levelNames[elevatorIndex]);
+		SmartDashboard.putString("Elevator Level", levelNames[elevatorIndex]);
 
 	}
 
@@ -511,8 +511,8 @@ public class Robot extends IterativeRobot {
 			elevatorIndex++;
 		}
 		elevatorControl.setSetpoint(levels[elevatorIndex]);
-		LEDSignboard.sendTextMessage(LevelNames[elevatorIndex]);
-		SmartDashboard.putString("Elevator Level", LevelNames[elevatorIndex]);
+		LEDSignboard.sendTextMessage(levelNames[elevatorIndex]);
+		SmartDashboard.putString("Elevator Level", levelNames[elevatorIndex]);
 	}
 
 	public void driveRobot(double left, double right) {
@@ -588,7 +588,7 @@ public class Robot extends IterativeRobot {
 				shimmy = ShimmyMode.FINISHED;
 			else {
 				if (shimmyCount == shimmyElevatorStart) {
-					elevatorControl.setSetpoint(encoderToInches(elevatorEncoder.get()) + 6);
+					elevatorUp();
 					elevatorControl.enable();
 				}
 				if (shimmy == ShimmyMode.LEFT)
