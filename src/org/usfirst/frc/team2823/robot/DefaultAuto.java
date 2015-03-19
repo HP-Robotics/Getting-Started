@@ -9,8 +9,8 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 1.5, 0.2, 2.0, 2.0, 2.0, 1.5, 3.5, 1.5, 0.5 }; // total 20.9
-	//lift, turn, drive 78, turn, approach, lift, turn, drive 78, turn, approach, drive 144, drop, drive back pi
+	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 1.5, 0.2, 2.0, 2.0, 1.5, 1.0, 1.5, 1.5, 3.5, 1.5, 0.5 }; // total 22.9
+	//lift, turn, drive 78, turn, approach, lift, turn, drive 78, turn, drive 10*sqrt(2), turn, approach, drive 144, drop, drive back pi
 	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	boolean stageTimeoutFailure[] = { false, false, false, false, false, false,
 			false, false, false, false, false, false, false };
@@ -275,15 +275,15 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		
-		// drive forward 78 inches
+		// drive forward 68 inches
 		if (stage == 7) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-78);
+				myBot.leftDrivingControl.setSetpoint(-68);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(78);
+				myBot.rightDrivingControl.setSetpoint(68);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("GO! ");
@@ -293,7 +293,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 78) < 4) && (Math.abs(l - (-78)) < 4))
+			if ((Math.abs(r - 68) < 4) && (Math.abs(l - (-68)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -311,18 +311,18 @@ public class DefaultAuto implements AutoMode {
 
 		}
 
-		// turn left 90 degrees
+		// turn left 45 degrees
 		if (stage == 8) {
 			if (stageCounts[stage] == 0) {
 				myBot.myGyro.reset();
-				myBot.turningControl.setSetpoint(-90);
+				myBot.turningControl.setSetpoint(-45);
 				myBot.turningControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("PI OVER TWOOOOO! ");
 
 			}
 
-			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < 6)
+			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < 6)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -338,9 +338,73 @@ public class DefaultAuto implements AutoMode {
 			}
 
 		}
+		
+		// drive forward 14.14... inches
+		if (stage == 9) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-10*Math.sqrt(2));
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(10*Math.sqrt(2));
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("GO! ");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (10*Math.sqrt(2))) < 4) && (Math.abs(l - (-10*Math.sqrt(2))) < 4))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > 10) {
+				tick.reset();
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				System.out.println("stage 9 succeeded!");
+				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
+				tick.reset();
+				stage++;
+				return;
+			}
+
+		}
+
+		// turn left 45 degrees
+		if (stage == 10) {
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(-45);
+				myBot.turningControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("PI OVER TWOOOOO! ");
+
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < 6)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > 10) {
+				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
+				tick.reset();
+				myBot.turningControl.disable();
+				System.out.println("stage 10 succeeded!");
+				tick.reset();
+				stage++;
+				return;
+			}
+
+		}
 
 		// approach the tote
-		if (stage == 9) {
+		if (stage == 11) {
 			if (stageCounts[stage] == 0) {
 				myBot.leftIRControl.setSetpoint(0.25);
 				myBot.rightIRControl.setSetpoint(0.25);
@@ -362,7 +426,7 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightIRControl.disable();
 				myBot.leftIRControl.disable();
-				System.out.println("stage 9 succeeded!");
+				System.out.println("stage 11 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				stage++;
@@ -371,7 +435,7 @@ public class DefaultAuto implements AutoMode {
 		}
 		
 		// drive forward 144 inches
-		if (stage == 10) {
+		if (stage == 12) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
@@ -397,7 +461,7 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 10 succeeded!");
+				System.out.println("stage 12 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				stage++;
@@ -406,20 +470,20 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		// put down totes
-		if (stage == 11) {
+		if (stage == 13) {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.disable();
 				myBot.slowElevatorControl.enable();
 				myBot.slowElevatorControl.setSetpoint(19.4);
 				myBot.elevatorIndex = -1;
-				System.out.println("stage 11 succeeded!");
+				System.out.println("stage 13 succeeded!");
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
 
 			}
 		}
 		
 		// drive back pi inches
-		if (stage == 12) {
+		if (stage == 14) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
@@ -445,7 +509,7 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 12 succeeded!");
+				System.out.println("stage 14 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				stage++;
