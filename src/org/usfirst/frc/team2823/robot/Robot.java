@@ -124,6 +124,9 @@ public class Robot extends IterativeRobot {
 	int shimmyMaxCount = 5;
 	double shimmyPower = 1.0;
 	int shimmyElevatorStart = 3;
+	
+	double rightWheelPosition = 0;
+	double leftWheelPosition = 0;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -183,6 +186,8 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Shimmy Timeout", 0.05);
 		SmartDashboard.putNumber("Shimmy Elevator Start", 3);
 		SmartDashboard.putNumber("Elevator Velocity", elevatorVelocity);
+		SmartDashboard.putNumber("Saved Wheel Position - Right", rightWheelPosition);
+		SmartDashboard.putNumber("Saved Wheel Position - Left", leftWheelPosition);
 		autoChooser = new SendableChooser();
 		autoChooser.addDefault("Default: 2 Totes", new DefaultAuto(this));
 		autoChooser.addObject("Alternate: Move 72 inches", new AlternateAuto(
@@ -635,6 +640,16 @@ public class Robot extends IterativeRobot {
 		shimmyTimeout = SmartDashboard.getNumber("Shimmy Timeout", 0.08);
 		shimmyElevatorStart = (int) SmartDashboard.getNumber(
 				"Shimmy Elevator Start", 3);
+	}
+
+	public void saveWheelPositions() {
+		rightWheelPosition = rightEncoder.get();
+		leftWheelPosition = leftEncoder.get();
+	}
+
+	public void returnToWheelPositions() {
+		rightDrivingControl.setSetpoint(rightWheelPosition);
+		leftDrivingControl.setSetpoint(leftWheelPosition);
 	}
 
 	public void sendUsefulValues() {

@@ -101,7 +101,6 @@ public class DefaultAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.enable();
 				myBot.elevatorUp();
-				myBot.elevatorUp();
 				System.out.println("stage 0 succeeded!");
 				LEDSignboard.sendTextMessage("TOTE ");
 
