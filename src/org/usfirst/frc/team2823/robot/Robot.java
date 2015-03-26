@@ -267,6 +267,7 @@ public class Robot extends IterativeRobot {
 			encoderLast = elevatorEncoder.get();
 			timerLast = EVTimer.get();
 		}
+		
 		updateShimmyConstants();
 
 		double axis1 = stick.getRawAxis(1);
