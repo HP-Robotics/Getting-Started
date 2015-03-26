@@ -127,6 +127,8 @@ public class Robot extends IterativeRobot {
 	
 	double rightWheelPosition = 0;
 	double leftWheelPosition = 0;
+	boolean backPressed = false;
+	boolean rewinding = false; // IMPORTANT VARIABLE, AS IT MUST BE SET TO TRUE TO USE THE returnToWheelPositions() METHOD, EVEN IN AUTO MODE!
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -296,10 +298,13 @@ public class Robot extends IterativeRobot {
 					rightDrivingControl.enable();
 				}
 			} else if (leftDrivingControl.isEnable()) {
-				leftDrivingControl.disable();
-				rightDrivingControl.disable();
-
+				if(!rewinding)
+				{
+					leftDrivingControl.disable();
+					rightDrivingControl.disable();
+				}
 			}
+
 			if (stick.getRawButton(6)) {
 				if (!elevatorControl.isEnable()) {
 					elevatorControl.enable();
@@ -323,11 +328,11 @@ public class Robot extends IterativeRobot {
 			} else {
 				BAMDownPressed = false;
 			}
-			double slowLift = 2.0;
+			double slowLift = 3.3;
 			if (stick.getRawButton(2)) {
 				slowLift = 1.0;
 			} else {
-				slowLift = 2.0;
+				slowLift = 3.3;
 			}
 			// ***** RAW ELEVATOR CONTROL *****
 			if (stick.getRawButton(5)) {
@@ -361,12 +366,21 @@ public class Robot extends IterativeRobot {
 			}
 
 			if (stick.getRawButton(10)) {
-				elevatorIndex = -1;
-				if (!elevatorControl.isEnable()) {
-					elevatorControl.enable();
+				saveWheelPositions();
+			}
+			
+			if (stick.getRawButton(9)) {
+				if(!backPressed)
+				{
+					returnToWheelPositions();
+					backPressed = true;
 				}
-				elevatorControl.setSetpoint(encoderToInches(elevatorEncoder
-						.get()));
+				rewinding = true;
+			}
+			else
+			{
+				backPressed = false;
+				rewinding = false;
 			}
 
 			if (stick.getPOV() == 180) {
@@ -650,6 +664,11 @@ public class Robot extends IterativeRobot {
 	public void returnToWheelPositions() {
 		rightDrivingControl.setSetpoint(rightWheelPosition);
 		leftDrivingControl.setSetpoint(leftWheelPosition);
+		if(rewinding)
+		{
+			rightDrivingControl.enable();
+			leftDrivingControl.enable();
+		}
 	}
 
 	public void sendUsefulValues() {
