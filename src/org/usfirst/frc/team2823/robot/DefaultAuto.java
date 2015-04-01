@@ -10,8 +10,8 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 0.1, 0.2, 1.0, 2.0, 2.0, 1.5, 1.0, 1.5, 3.5, 9001, 0.5 }; // total 22.9
-	//lift, turn, drive 78, turn, save, lift, return, turn, drive 78, turn, drive 10*sqrt(2), turn, drive 144, drop, drive back pi
+	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 0.1, 0.2, 1.0, 2.0, 2.0, 1.5, 1.0, 1.5, 3.5, 9001, 0.5 }; // total 20.0, used 0.5 for stage 13
+	//lift, turn, drive 78, turn, save position, lift, return, turn, drive 78, turn, drive 10*sqrt(2), turn, drive 144, drop, drive back pi
 	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int ontarget;
 	int stage = 0;
@@ -425,12 +425,12 @@ public class DefaultAuto implements AutoMode {
 		if (stage == 13) {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.enable();
-				myBot.elevatorControl.setSetpoint(19.4);
+				myBot.elevatorControl.setSetpoint(12);
 				myBot.elevatorIndex = -1;
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
 			}
 			
-			if(Math.abs(myBot.encoderToInches(myBot.elevatorEncoder.get()) - 19.4) <= 0.1) {
+			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 19.4) {
 				System.out.println("stage 13 succeeded!");
 				nextStage();
 			}
@@ -466,7 +466,6 @@ public class DefaultAuto implements AutoMode {
 				System.out.println("stage 14 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				nextStage();
-				return;
 			}
 
 		}
