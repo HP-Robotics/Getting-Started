@@ -125,7 +125,7 @@ public class Robot extends IterativeRobot {
 	double shimmyPower = 1.0;
 	int shimmyElevatorStart = 3;
 	
-	double rightWheelPosition = 0;
+	double rightWheelPosition = 0; // ENCODER UNITS, NOT INCHES
 	double leftWheelPosition = 0;
 	boolean backPressed = false;
 	boolean rewinding = false; // IMPORTANT VARIABLE, AS IT MUST BE SET TO TRUE TO USE THE returnToWheelPositions() METHOD, EVEN IN AUTO MODE!
@@ -195,6 +195,8 @@ public class Robot extends IterativeRobot {
 		autoChooser.addObject("Alternate: Move 72 inches", new AlternateAuto(
 				this));
 		autoChooser.addObject("Empty: Do Nothing", new EmptyAuto());
+		autoChooser.addObject("Tele-Auto", new TeleAuto(
+				this));
 		SmartDashboard.putData("Autonomous Mode", autoChooser);
 
 		// LiveWindow.addActuator("Talons", "Talon1", talon1);
@@ -615,6 +617,7 @@ public class Robot extends IterativeRobot {
 		LEDSignboard.sendTextMessage("Shimmy me timbers!!!!!!");
 		shimmy = ShimmyMode.LEFT;
 		shimmyCount = 0;
+		shimmyTime.reset();
 		shimmyTime.start();
 	}
 

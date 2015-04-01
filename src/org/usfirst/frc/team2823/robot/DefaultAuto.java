@@ -2,6 +2,7 @@ package org.usfirst.frc.team2823.robot;
 
 import org.usfirst.frc.team2823.robot.Robot.ShimmyMode;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 
 // total 1: 7.628
@@ -9,19 +10,17 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 1.5, 0.2, 2.0, 2.0, 1.5, 1.0, 1.5, 1.5, 3.5, 1.5, 0.5 }; // total 22.9
-	//lift, turn, drive 78, turn, approach, lift, turn, drive 78, turn, drive 10*sqrt(2), turn, approach, drive 144, drop, drive back pi
+	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 0.1, 0.2, 1.0, 2.0, 2.0, 1.5, 1.0, 1.5, 3.5, 9001, 0.5 }; // total 22.9
+	//lift, turn, drive 78, turn, save, lift, return, turn, drive 78, turn, drive 10*sqrt(2), turn, drive 144, drop, drive back pi
 	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	boolean stageTimeoutFailure[] = { false, false, false, false, false, false,
-			false, false, false, false, false, false, false };
 	int ontarget;
 	int stage = 0;
 	Timer tick;
-	Timer stageTime;
 	int stageLast = 0;
 	boolean runFirstHalf = true;
 	boolean runSecondHalf = true;
 	final static int SECOND_HALF_START = 5;
+	final static int ONTARGET_THRESHOLD = 5; // the minimum number of loops on target required to move to the next stage
 
 	// *****MOVE UP OR DOWN AS NECESSARY ONCE RECALIBRATED*****
 	//
@@ -45,7 +44,6 @@ public class DefaultAuto implements AutoMode {
 
 	public void autoInit() {
 		tick = new Timer();
-		stageTime = new Timer();
 		tick.reset();
 		tick.start();
 		
@@ -62,8 +60,6 @@ public class DefaultAuto implements AutoMode {
 			stageCounts[i] = 0;
 
 		System.out.println("Hey, you chose the alternate autonomous mode. Good job!");
-		stageTime.reset();
-		stageTime.start();
 	}
 
 	public void autoPeriodic() {
@@ -74,25 +70,15 @@ public class DefaultAuto implements AutoMode {
 		if((runFirstHalf == true) && (runSecondHalf == false) && (stage >= SECOND_HALF_START))
 			return;
 
-		if (stageCounts[stage] == 0)
-			System.out.println(stage);
-
 		if (tick.get() > stageTimeouts[stage]) {
 
 			System.out.printf("stage %d timed out\n", stage);
 
 			myBot.disableAllPIDControllers();
 
-			if (stageTimeoutFailure[stage]) {
-				System.out.printf("stage %d failed!\n", stage);
-				stage = -1;
-				return;
-			}
-
 			System.out.println("Continuing anyway...");
 			System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-			tick.reset();
-			stage++;
+			nextStage();
 			return;
 		}
 
@@ -124,15 +110,13 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
 				System.out.println("stage 1 succeeded!");
 				myBot.elevatorControl.disable();
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
 
 		}
@@ -143,9 +127,9 @@ public class DefaultAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-78);
+				myBot.leftDrivingControl.setSetpoint(-81);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(78);
+				myBot.rightDrivingControl.setSetpoint(81);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("GO! ");
@@ -155,20 +139,18 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 78) < 4) && (Math.abs(l - (-78)) < 4))
+			if ((Math.abs(r - 81) < 4) && (Math.abs(l - (-81)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				System.out.println("stage 2 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
 
 		}
@@ -189,63 +171,77 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
 				System.out.println("stage 3 succeeded!");
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
 
 		}
 
-		// approach the tote
+		// save wheel positions
 		if (stage == 4) {
 			if (stageCounts[stage] == 0) {
-				myBot.leftIRControl.setSetpoint(0.25);
-				myBot.rightIRControl.setSetpoint(0.25);
-				myBot.leftIRControl.enable();
-				myBot.rightIRControl.enable();
-				ontarget = 0;
-				LEDSignboard.sendTextMessage("*APPROACHES CAUTIOUSLY* ");
-
+				myBot.saveWheelPositions();
+				System.out.println("stage 4 succeeded!");
+				nextStage();
 			}
+		}
 
-			if ((Math
-					.abs(myBot.infraredSensorLeft.getAverageVoltage() - (1.70)) < 0.3)
-					&& (Math.abs(myBot.infraredSensorRight.getAverageVoltage() - 1.70) < 0.3))
+		// shimmy
+		if (stage == 5) {
+			
+			if (myBot.shimmy != ShimmyMode.FINISHED) {
+				double axis1 = 0;
+				double axis3 = 0;
+				
+				if (myBot.shimmy == ShimmyMode.DISABLED) {
+					myBot.shimmyInit();
+				}
+
+				myBot.doShimmy();
+
+				if (myBot.shimmy == ShimmyMode.LEFT)
+					axis1 = -1 * myBot.shimmyPower;
+				if (myBot.shimmy == ShimmyMode.RIGHT)
+					axis3 = -1 * myBot.shimmyPower;
+				System.out.println(myBot.shimmy);
+				
+				myBot.driveRobot(axis1, axis3);
+			}
+			else {
+				System.out.println("stage 5 succeeded!");
+				nextStage();
+			}
+		}
+		
+		// return to saved wheel positions
+		if (stage == 6) {
+			if (stageCounts[stage] == 0){
+				myBot.rewinding = true;
+				myBot.returnToWheelPositions();
+				ontarget = 0;
+			}
+			
+			if ((myBot.encoderToInches(Math.abs(myBot.leftEncoder.get() - myBot.leftWheelPosition)) < 0.5) && (myBot.encoderToInches(Math.abs(myBot.rightEncoder.get() - myBot.rightWheelPosition)) < 0.5))
 				ontarget++;
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
-				tick.reset();
-				myBot.rightIRControl.disable();
-				myBot.leftIRControl.disable();
-				System.out.println("stage 4 succeeded!");
+			if (ontarget > ONTARGET_THRESHOLD) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
-				stage++;
-				return;
-			}
-
-		}
-		
-		// pick up a tote
-		if (stage == 5) {
-			if (stageCounts[stage] == 0) {
-				myBot.elevatorControl.enable();
-				myBot.elevatorUp();
-				System.out.println("stage 5 succeeded!");
-				LEDSignboard.sendTextMessage("TOTE ");
-
+				myBot.turningControl.disable();
+				System.out.println("stage 6 succeeded!");
+				myBot.elevatorControl.disable();
+				nextStage();
 			}
 		}
 		
 		// turn right 90 degrees
-		if (stage == 6) {
+		if (stage == 7) {
 			myBot.elevatorControl.enable();
 			if (stageCounts[stage] == 0) {
 				myBot.myGyro.reset();
@@ -261,21 +257,19 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 6 succeeded!");
+				System.out.println("stage 7 succeeded!");
 				myBot.elevatorControl.disable();
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
 
 		}
 		
 		// drive forward 68 inches
-		if (stage == 7) {
+		if (stage == 8) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
@@ -297,21 +291,19 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 7 succeeded!");
+				System.out.println("stage 8 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
 
 		}
 
 		// turn left 45 degrees
-		if (stage == 8) {
+		if (stage == 9) {
 			if (stageCounts[stage] == 0) {
 				myBot.myGyro.reset();
 				myBot.turningControl.setSetpoint(-45);
@@ -326,20 +318,18 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 8 succeeded!");
-				tick.reset();
-				stage++;
-				return;
+				System.out.println("stage 9 succeeded!");
+				nextStage();
 			}
 
 		}
 		
 		// drive forward 14.14... inches
-		if (stage == 9) {
+		if (stage == 10) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
@@ -361,21 +351,19 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 9 succeeded!");
+				System.out.println("stage 10 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
 
 		}
 
 		// turn left 45 degrees
-		if (stage == 10) {
+		if (stage == 11) {
 			if (stageCounts[stage] == 0) {
 				myBot.myGyro.reset();
 				myBot.turningControl.setSetpoint(-45);
@@ -390,47 +378,14 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 10 succeeded!");
-				tick.reset();
-				stage++;
-				return;
-			}
-
-		}
-
-		// approach the tote
-		if (stage == 11) {
-			if (stageCounts[stage] == 0) {
-				myBot.leftIRControl.setSetpoint(0.25);
-				myBot.rightIRControl.setSetpoint(0.25);
-				myBot.leftIRControl.enable();
-				myBot.rightIRControl.enable();
-				ontarget = 0;
-				LEDSignboard.sendTextMessage("*APPROACHES CAUTIOUSLY* ");
-
-			}
-
-			if ((Math
-					.abs(myBot.infraredSensorLeft.getAverageVoltage() - (1.70)) < 0.3)
-					&& (Math.abs(myBot.infraredSensorRight.getAverageVoltage() - 1.70) < 0.3))
-				ontarget++;
-			else
-				ontarget = 0;
-
-			if (ontarget > 10) {
-				tick.reset();
-				myBot.rightIRControl.disable();
-				myBot.leftIRControl.disable();
 				System.out.println("stage 11 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
+
 		}
 		
 		// drive forward 144 inches
@@ -439,9 +394,9 @@ public class DefaultAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-144);
+				myBot.leftDrivingControl.setSetpoint(-134);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(144);
+				myBot.rightDrivingControl.setSetpoint(134);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("WALK THE PLANK!");
@@ -451,33 +406,33 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 144) < 4) && (Math.abs(l - (-144)) < 4))
+			if ((Math.abs(r - 134) < 4) && (Math.abs(l - (-134)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				System.out.println("stage 12 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
-				return;
+				nextStage();
 			}
 
 		}
 		// put down totes
 		if (stage == 13) {
 			if (stageCounts[stage] == 0) {
-				myBot.elevatorControl.disable();
-				myBot.slowElevatorControl.enable();
-				myBot.slowElevatorControl.setSetpoint(19.4);
+				myBot.elevatorControl.enable();
+				myBot.elevatorControl.setSetpoint(19.4);
 				myBot.elevatorIndex = -1;
-				System.out.println("stage 13 succeeded!");
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
-
+			}
+			
+			if(Math.abs(myBot.encoderToInches(myBot.elevatorEncoder.get()) - 19.4) <= 0.1) {
+				System.out.println("stage 13 succeeded!");
+				nextStage();
 			}
 		}
 		
@@ -504,29 +459,28 @@ public class DefaultAuto implements AutoMode {
 			else
 				ontarget = 0;
 
-			if (ontarget > 10) {
+			if (ontarget > ONTARGET_THRESHOLD) {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				System.out.println("stage 14 succeeded!");
 				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
-				tick.reset();
-				stage++;
+				nextStage();
 				return;
 			}
 
 		}
 
-		if (stage != stageLast) {
-			stageTime.stop();
-			System.out.println("Stage time: " + stageTime.get());
-			stageTime.reset();
-			stageTime.start();
-		}
-
-		stageLast = stage;
 		stageCounts[stage]++;
 
+	}
+
+	public void nextStage()
+	{
+		tick.reset();
+		stage++;
+		System.out.println(stage);
+		System.out.println(DriverStation.getInstance().getMatchTime());
 	}
 
 }
