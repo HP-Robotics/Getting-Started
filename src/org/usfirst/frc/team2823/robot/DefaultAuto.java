@@ -12,7 +12,7 @@ public class DefaultAuto implements AutoMode {
 
 	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 0.1, 0.2, 1.0, 2.0, 2.0, 1.5, 1.0, 1.5, 3.5, 9001, 0.5 }; // total 22.9
 	//lift, turn, drive 78, turn, save, lift, return, turn, drive 78, turn, drive 10*sqrt(2), turn, drive 144, drop, drive back pi
-	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int ontarget;
 	int stage = 0;
 	Timer tick;
