@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 0.1, 0.2, 1.0, 2.0, 2.0, 1.5, 1.0, 1.5, 3.5, 9001, 0.5 }; // total 20.0, used 0.5 for stage 13
+	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 0.4, 0.2, 1.0, 2.0, 2.0, 1.5, 1.0, 1.5, 3.5, 9001, 0.5 }; // total 20.3, used 0.5 for stage 13
 	//lift, turn, drive 78, turn, save position, lift, return, turn, drive 78, turn, drive 10*sqrt(2), turn, drive 144, drop, drive back pi
 	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int ontarget;
@@ -71,7 +71,7 @@ public class DefaultAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.enable();
 				myBot.elevatorUp();
-				LEDSignboard.sendTextMessage("TOTE ");
+				LEDSignboard.sendTextMessage("* #TEAM20POINTAUTO");
 
 			}
 		}
@@ -84,8 +84,6 @@ public class DefaultAuto implements AutoMode {
 				myBot.turningControl.setSetpoint(90);
 				myBot.turningControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("TURN ");
-
 			}
 
 			if (Math.abs(myBot.myGyro.getAngle() - 90) < 6)
@@ -100,7 +98,7 @@ public class DefaultAuto implements AutoMode {
 
 		}
 
-		// drive forward 78 inches
+		// drive forward 81 inches
 		if (stage == 2) {
 
 			if (stageCounts[stage] == 0) {
@@ -111,7 +109,6 @@ public class DefaultAuto implements AutoMode {
 				myBot.rightDrivingControl.setSetpoint(81);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("GO! ");
 
 			}
 
@@ -138,8 +135,6 @@ public class DefaultAuto implements AutoMode {
 				myBot.turningControl.setSetpoint(-90);
 				myBot.turningControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("PI OVER TWOOOOO! ");
-
 			}
 
 			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < 6)
@@ -154,15 +149,39 @@ public class DefaultAuto implements AutoMode {
 
 		}
 
-		// save wheel positions
+		// save wheel positions and forward PI"
 		if (stage == 4) {
 			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
 				myBot.saveWheelPositions();
+				myBot.leftDrivingControl.setSetpoint(-Math.PI);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(Math.PI);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("DONE!");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (Math.PI)) < 4) && (Math.abs(l - (-Math.PI)) < 4))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
 				nextStage();
 			}
+
 		}
 
 		// shimmy
+		//TODO: Maybe delay .1 sec to allow tote to load
 		if (stage == 5) {
 			
 			if (myBot.shimmy != ShimmyMode.FINISHED) {
@@ -193,6 +212,8 @@ public class DefaultAuto implements AutoMode {
 				myBot.rewinding = true;
 				myBot.returnToWheelPositions();
 				ontarget = 0;
+				LEDSignboard.sendTextMessage("*GOT TOTE 2?");
+				
 			}
 			
 			if ((myBot.encoderToInches(Math.abs(myBot.leftEncoder.get() - myBot.leftWheelPosition)) < 0.5) && (myBot.encoderToInches(Math.abs(myBot.rightEncoder.get() - myBot.rightWheelPosition)) < 0.5))
@@ -201,7 +222,8 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				myBot.turningControl.disable();
+				myBot.leftDrivingControl.disable();
+				myBot.rightDrivingControl.disable();
 				nextStage();
 			}
 		}
@@ -214,7 +236,6 @@ public class DefaultAuto implements AutoMode {
 				myBot.turningControl.setSetpoint(90);
 				myBot.turningControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("TURN ");
 
 			}
 
@@ -230,25 +251,24 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		
-		// drive forward 68 inches
+		// drive forward 71 inches
 		if (stage == 8) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-68);
+				myBot.leftDrivingControl.setSetpoint(-71);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(68);
+				myBot.rightDrivingControl.setSetpoint(71);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("GO! ");
 
 			}
 
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 68) < 4) && (Math.abs(l - (-68)) < 4))
+			if ((Math.abs(r - 71) < 4) && (Math.abs(l - (-71)) < 4))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -268,8 +288,6 @@ public class DefaultAuto implements AutoMode {
 				myBot.turningControl.setSetpoint(-45);
 				myBot.turningControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("PI OVER TWOOOOO! ");
-
 			}
 
 			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < 6)
@@ -295,8 +313,6 @@ public class DefaultAuto implements AutoMode {
 				myBot.rightDrivingControl.setSetpoint(10*Math.sqrt(2));
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("GO! ");
-
 			}
 
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
@@ -322,8 +338,6 @@ public class DefaultAuto implements AutoMode {
 				myBot.turningControl.setSetpoint(-45);
 				myBot.turningControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("PI OVER TWOOOOO! ");
-
 			}
 
 			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < 6)
@@ -338,7 +352,7 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		
-		// drive forward 144 inches
+		// drive forward 134 inches
 		if (stage == 12) {
 
 			if (stageCounts[stage] == 0) {
@@ -349,7 +363,7 @@ public class DefaultAuto implements AutoMode {
 				myBot.rightDrivingControl.setSetpoint(134);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("WALK THE PLANK!");
+				LEDSignboard.sendTextMessage("**GO! GO! GOOOOOOOOOOO!");
 
 			}
 
@@ -372,7 +386,7 @@ public class DefaultAuto implements AutoMode {
 		if (stage == 13) {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.enable();
-				myBot.elevatorControl.setSetpoint(12);
+				myBot.elevatorControl.setSetpoint(18);
 				myBot.elevatorIndex = -1;
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
 			}
@@ -393,7 +407,7 @@ public class DefaultAuto implements AutoMode {
 				myBot.rightDrivingControl.setSetpoint(-Math.PI);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("WALK THE PLANK!");
+				LEDSignboard.sendTextMessage("DONE!");
 
 			}
 
