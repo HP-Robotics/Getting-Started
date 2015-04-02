@@ -75,9 +75,7 @@ public class DefaultAuto implements AutoMode {
 			System.out.printf("stage %d timed out\n", stage);
 
 			myBot.disableAllPIDControllers();
-
-			System.out.println("Continuing anyway...");
-			System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
+			myBot.elevatorControl.enable();
 			nextStage();
 			return;
 		}
@@ -87,7 +85,6 @@ public class DefaultAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.enable();
 				myBot.elevatorUp();
-				System.out.println("stage 0 succeeded!");
 				LEDSignboard.sendTextMessage("TOTE ");
 
 			}
@@ -111,11 +108,8 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 1 succeeded!");
-				myBot.elevatorControl.disable();
 				nextStage();
 			}
 
@@ -148,8 +142,6 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 2 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				nextStage();
 			}
 
@@ -172,10 +164,8 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 3 succeeded!");
 				nextStage();
 			}
 
@@ -185,7 +175,6 @@ public class DefaultAuto implements AutoMode {
 		if (stage == 4) {
 			if (stageCounts[stage] == 0) {
 				myBot.saveWheelPositions();
-				System.out.println("stage 4 succeeded!");
 				nextStage();
 			}
 		}
@@ -207,12 +196,10 @@ public class DefaultAuto implements AutoMode {
 					axis1 = -1 * myBot.shimmyPower;
 				if (myBot.shimmy == ShimmyMode.RIGHT)
 					axis3 = -1 * myBot.shimmyPower;
-				System.out.println(myBot.shimmy);
 				
 				myBot.driveRobot(axis1, axis3);
 			}
 			else {
-				System.out.println("stage 5 succeeded!");
 				nextStage();
 			}
 		}
@@ -231,11 +218,8 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 6 succeeded!");
-				myBot.elevatorControl.disable();
 				nextStage();
 			}
 		}
@@ -258,11 +242,8 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 7 succeeded!");
-				myBot.elevatorControl.disable();
 				nextStage();
 			}
 
@@ -295,8 +276,6 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 8 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				nextStage();
 			}
 
@@ -319,10 +298,8 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 9 succeeded!");
 				nextStage();
 			}
 
@@ -355,8 +332,6 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 10 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				nextStage();
 			}
 
@@ -379,10 +354,8 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				tick.reset();
 				myBot.turningControl.disable();
-				System.out.println("stage 11 succeeded!");
 				nextStage();
 			}
 
@@ -415,8 +388,6 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 12 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				nextStage();
 			}
 
@@ -431,7 +402,6 @@ public class DefaultAuto implements AutoMode {
 			}
 			
 			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 19.4) {
-				System.out.println("stage 13 succeeded!");
 				nextStage();
 			}
 		}
@@ -463,8 +433,6 @@ public class DefaultAuto implements AutoMode {
 				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
-				System.out.println("stage 14 succeeded!");
-				System.out.printf("%f Exiting Stage %d\n", tick.get(), stage);
 				nextStage();
 			}
 
@@ -476,10 +444,9 @@ public class DefaultAuto implements AutoMode {
 
 	public void nextStage()
 	{
+		System.out.printf("Stage Finished: %d\tTime: %f\tTotal Time:%f\n",stage,tick.get(),DriverStation.getInstance().getMatchTime());
 		tick.reset();
 		stage++;
-		System.out.println(stage);
-		System.out.println(DriverStation.getInstance().getMatchTime());
 	}
 
 }
