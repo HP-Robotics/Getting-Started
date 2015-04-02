@@ -108,7 +108,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.turningControl.disable();
 				nextStage();
 			}
@@ -139,7 +138,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				nextStage();
@@ -164,7 +162,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.turningControl.disable();
 				nextStage();
 			}
@@ -218,7 +215,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.turningControl.disable();
 				nextStage();
 			}
@@ -242,7 +238,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.turningControl.disable();
 				nextStage();
 			}
@@ -273,7 +268,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				nextStage();
@@ -298,7 +292,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.turningControl.disable();
 				nextStage();
 			}
@@ -329,7 +322,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				nextStage();
@@ -354,7 +346,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.turningControl.disable();
 				nextStage();
 			}
@@ -385,7 +376,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				nextStage();
@@ -430,7 +420,6 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				tick.reset();
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
 				nextStage();
