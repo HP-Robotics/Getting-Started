@@ -218,7 +218,7 @@ public class DefaultAuto implements AutoMode {
 				
 			}
 			
-			if ((myBot.encoderToInches(Math.abs(myBot.leftEncoder.get() - myBot.leftWheelPosition)) < 0.5) && (myBot.encoderToInches(Math.abs(myBot.rightEncoder.get() - myBot.rightWheelPosition)) < 0.5))
+			if ((myBot.encoderToInches(Math.abs(myBot.leftEncoder.get() - myBot.leftWheelPosition)) < SHORT_DISTANCE_PRECISION) && (myBot.encoderToInches(Math.abs(myBot.rightEncoder.get() - myBot.rightWheelPosition)) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
