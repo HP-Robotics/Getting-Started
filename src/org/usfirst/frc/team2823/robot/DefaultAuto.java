@@ -20,23 +20,9 @@ public class DefaultAuto implements AutoMode {
 	boolean runFirstHalf = true;
 	boolean runSecondHalf = true;
 	final static int SECOND_HALF_START = 5;
-	final static int ONTARGET_THRESHOLD = 5; // the minimum number of loops on target required to move to the next stage
+	final static int ONTARGET_THRESHOLD = 10; // the minimum number of loops on target required to move to the next stage
 
-	// *****MOVE UP OR DOWN AS NECESSARY ONCE RECALIBRATED*****
-	//
-	// *****CODE IS CURRENTLY IDENTICAL TO ALTERNATEAUTO CODE*****
-	// pick up tote
-	// back up 34.11514859600516 in.
-	// turn right 30 degrees
-	// drive forward 13.525 in.
-	// pick up can
-	// turn left 30 degrees
-	// back up 84.59784499017937 in.
-	// turn right 90 degrees
-	// drop tote
-	// move back 24.5 ft.
-	// drop can
-	// move back enough
+
 
 	public DefaultAuto(Robot myBot) {
 		this.myBot = myBot;
