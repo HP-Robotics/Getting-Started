@@ -10,15 +10,15 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double stageTimeouts[] = { 0.2, 2.0, 2.0, 2.0, 0.4, 0.2, 1.0, 2.0, 2.0, 1.5, 1.0, 1.5, 3.5, 9001, 0.5 }; // total 20.3, used 0.5 for stage 13
-	//lift, turn, drive 78, turn, save position, lift, return, turn, drive 78, turn, drive 10*sqrt(2), turn, drive 144, drop, drive back pi
-	int stageCounts[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	double[] stageTimeouts = { 0.1, 2.0, 2.0, 2.0, 0.4, 0.1, 0.4, 2.0, 2.0, 1.5, 1.0, 1.5, 0.5, 0.5, 9001, 3.5, 0.5, 0.1 }; // total 20.3, used 0.5 for stage 13
+	//lift, turn, drive 74, turn, drive pi, lift, drive -pi, turn, drive 74, turn, drive 10*sqrt(2), turn, drive 5, drive -1, drop, drive 130, drive -1, lift
+	int[] stageCounts = new int[18];
 	int ontarget;
 	int stage = 0;
 	Timer tick;
 	int stageLast = 0;
 	boolean runFirstHalf = true;
-	boolean runSecondHalf = true;
+	boolean runSecondHalf = false;
 	final static int SECOND_HALF_START = 5;
 	final static int ONTARGET_THRESHOLD = 10; // the minimum number of loops on target required to move to the next stage
 	final static double TURN_PRECISION = 6;		//threshold for counting it as on target (degrees)
@@ -151,12 +151,11 @@ public class DefaultAuto implements AutoMode {
 
 		}
 
-		// save wheel positions and forward PI"
+		// drive forward PI"
 		if (stage == 4) {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.saveWheelPositions();
 				myBot.leftDrivingControl.setSetpoint(-Math.PI);
 				myBot.leftDrivingControl.enable();
 				myBot.rightDrivingControl.setSetpoint(Math.PI);
@@ -169,7 +168,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (Math.PI)) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-Math.PI)) < LONG_DISTANCE_PRECISION))
+			if ((Math.abs(r - (Math.PI)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (-Math.PI)) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -185,49 +184,41 @@ public class DefaultAuto implements AutoMode {
 		// shimmy
 		//TODO: Maybe delay .1 sec to allow tote to load
 		if (stage == 5) {
-			
-			if (myBot.shimmy != ShimmyMode.FINISHED) {
-				double axis1 = 0;
-				double axis3 = 0;
-				
-				if (myBot.shimmy == ShimmyMode.DISABLED) {
-					myBot.shimmyInit();
-				}
-
-				myBot.doShimmy();
-
-				if (myBot.shimmy == ShimmyMode.LEFT)
-					axis1 = -1 * myBot.shimmyPower;
-				if (myBot.shimmy == ShimmyMode.RIGHT)
-					axis3 = -1 * myBot.shimmyPower;
-				
-				myBot.driveRobot(axis1, axis3);
-			}
-			else {
-				nextStage();
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorUp();
+				LEDSignboard.sendTextMessage("INSTANT MESSAGE... YOU'LL NEVER READ THIS PART!");
 			}
 		}
 		
-		// return to saved wheel positions
+		// drive back pi
 		if (stage == 6) {
-			if (stageCounts[stage] == 0){
-				myBot.rewinding = true;
-				myBot.returnToWheelPositions();
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(Math.PI);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-Math.PI);
+				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("*GOT TOTE 2?");
-				
+				LEDSignboard.sendTextMessage("DONE!");
+
 			}
-			
-			if ((myBot.encoderToInches(Math.abs(myBot.leftEncoder.get() - myBot.leftWheelPosition)) < SHORT_DISTANCE_PRECISION) && (myBot.encoderToInches(Math.abs(myBot.rightEncoder.get() - myBot.rightWheelPosition)) < SHORT_DISTANCE_PRECISION))
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-Math.PI)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (Math.PI)) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
 
 			if (ontarget > ONTARGET_THRESHOLD) {
-				myBot.leftDrivingControl.disable();
 				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
 				nextStage();
 			}
+
 		}
 		
 		// turn right 90 degrees
@@ -253,15 +244,15 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		
-		// drive forward 71 inches
+		// drive forward 74 inches
 		if (stage == 8) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-71);
+				myBot.leftDrivingControl.setSetpoint(-74);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(71);
+				myBot.rightDrivingControl.setSetpoint(74);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 
@@ -270,7 +261,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 71) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-71)) < LONG_DISTANCE_PRECISION))
+			if ((Math.abs(r - 74) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-74)) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -304,15 +295,15 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		
-		// drive forward 14.14... inches
+		// drive forward 7*sqrt(2)... inches
 		if (stage == 10) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-10*Math.sqrt(2));
+				myBot.leftDrivingControl.setSetpoint(-7*Math.sqrt(2));
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(10*Math.sqrt(2));
+				myBot.rightDrivingControl.setSetpoint(7*Math.sqrt(2));
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 			}
@@ -320,7 +311,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (10*Math.sqrt(2))) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-10*Math.sqrt(2))) < LONG_DISTANCE_PRECISION))
+			if ((Math.abs(r - (7*Math.sqrt(2))) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (-7*Math.sqrt(2))) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -354,15 +345,89 @@ public class DefaultAuto implements AutoMode {
 
 		}
 		
-		// drive forward 134 inches
+		//drive forward 5 inches
 		if (stage == 12) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-134);
+				myBot.leftDrivingControl.setSetpoint(-5);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(134);
+				myBot.rightDrivingControl.setSetpoint(5);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("**ALIGNING...");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - 5) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (-5)) < SHORT_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+		}
+		
+		// drive back 1 inch
+		if (stage == 13) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(1);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-1);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("**ALIGNING...");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-1)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (1)) < SHORT_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+		}
+		
+		// drop totes
+		if (stage == 14) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorControl.setSetpoint(22.6);
+				myBot.elevatorIndex = -1;
+				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
+			}
+			
+			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 19.4) {
+				nextStage();
+			}
+		}
+		
+		// drive forward 130 inches
+		if (stage == 15) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-130);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(130);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("**GO! GO! GOOOOOOOOOOO!");
@@ -382,41 +447,27 @@ public class DefaultAuto implements AutoMode {
 				myBot.leftDrivingControl.disable();
 				nextStage();
 			}
-
-		}
-		// put down totes
-		if (stage == 13) {
-			if (stageCounts[stage] == 0) {
-				myBot.elevatorControl.enable();
-				myBot.elevatorControl.setSetpoint(18);
-				myBot.elevatorIndex = -1;
-				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
-			}
-			
-			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 19.4) {
-				nextStage();
-			}
 		}
 		
-		// drive back pi inches
-		if (stage == 14) {
+		// drive back 1 inch
+		if (stage == 16) {
 
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(Math.PI);
+				myBot.leftDrivingControl.setSetpoint(1);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(-Math.PI);
+				myBot.rightDrivingControl.setSetpoint(-1);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
-				LEDSignboard.sendTextMessage("DONE!");
+				LEDSignboard.sendTextMessage("DISENGAGE...");
 
 			}
 
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (-Math.PI)) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (Math.PI)) < LONG_DISTANCE_PRECISION))
+			if ((Math.abs(r - (-1)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (1)) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -428,8 +479,19 @@ public class DefaultAuto implements AutoMode {
 			}
 
 		}
+		
+		if (stage == 17) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorUp();
+				myBot.elevatorUp();
+				LEDSignboard.sendTextMessage("!");
+			}
+		}
 
-		stageCounts[stage]++;
+		if(stage < stageCounts.length) {
+			stageCounts[stage]++;
+		}
 
 	}
 

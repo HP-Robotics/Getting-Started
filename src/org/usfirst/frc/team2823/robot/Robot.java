@@ -94,7 +94,7 @@ public class Robot extends IterativeRobot {
 	final static double[] distancesRight = new double[] { -0.5, 0, 1, 2, 3, 4,
 			5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36 };
 
-	final static double[] levels = { 0, 8.864, 26.597, 44.477, 54.507 };
+	final static double[] levels = { 0, 8.221, 25.954, 43.938, 54.507 };
 	final static String[] levelNames = { "!B", "!T1", "!T2", "!T3", "!TP" };
 	double myDriveDistance = 144.0;// 0.6;
 
@@ -112,8 +112,8 @@ public class Robot extends IterativeRobot {
 
 	boolean rightStarted = false;
 	boolean leftStarted = false;
-	double elevatorOffset = levels[4];
-	int elevatorIndex = 4;
+	double elevatorOffset = levels[1];
+	int elevatorIndex = 1;
 
 	Timer EVTimer = new Timer(); // EV = Elevator Velocity
 	double timerLast;
@@ -188,8 +188,6 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Shimmy Timeout", 0.05);
 		SmartDashboard.putNumber("Shimmy Elevator Start", 3);
 		SmartDashboard.putNumber("Elevator Velocity", elevatorVelocity);
-		SmartDashboard.putNumber("Saved Wheel Position - Right", rightWheelPosition);
-		SmartDashboard.putNumber("Saved Wheel Position - Left", leftWheelPosition);
 		autoChooser = new SendableChooser();
 		autoChooser.addDefault("Default: 2 Totes", new DefaultAuto(this));
 		autoChooser.addObject("Alternate: Move 72 inches", new AlternateAuto(
@@ -370,12 +368,12 @@ public class Robot extends IterativeRobot {
 			}
 			
 			if (stick.getRawButton(9)) {
+				rewinding = true;
 				if(!backPressed)
 				{
 					returnToWheelPositions();
 					backPressed = true;
 				}
-				rewinding = true;
 			}
 			else
 			{
@@ -663,8 +661,8 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void returnToWheelPositions() {
-		rightDrivingControl.setSetpoint(rightWheelPosition);
-		leftDrivingControl.setSetpoint(leftWheelPosition);
+		rightDrivingControl.setSetpoint(encoderToInches(rightWheelPosition));
+		leftDrivingControl.setSetpoint(encoderToInches(leftWheelPosition));
 		if(rewinding)
 		{
 			rightDrivingControl.enable();
@@ -704,6 +702,8 @@ public class Robot extends IterativeRobot {
 				driveEncoderToInches(leftEncoder.get()));
 		SmartDashboard.putBoolean("Top switch", switchTop.get());
 		SmartDashboard.putBoolean("Bottom switch", switchBottom.get());
+		SmartDashboard.putNumber("Saved Wheel Position - Right", rightWheelPosition);
+		SmartDashboard.putNumber("Saved Wheel Position - Left", leftWheelPosition);
 	}
 
 	public class GyroPIDOutput implements PIDOutput {
