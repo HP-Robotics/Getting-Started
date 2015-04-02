@@ -195,8 +195,6 @@ public class Robot extends IterativeRobot {
 		autoChooser.addObject("Alternate: Move 72 inches", new AlternateAuto(
 				this));
 		autoChooser.addObject("Empty: Do Nothing", new EmptyAuto());
-		autoChooser.addObject("Tele-Auto", new TeleAuto(
-				this));
 		SmartDashboard.putData("Autonomous Mode", autoChooser);
 
 		// LiveWindow.addActuator("Talons", "Talon1", talon1);
