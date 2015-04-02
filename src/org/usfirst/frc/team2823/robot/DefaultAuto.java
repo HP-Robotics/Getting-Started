@@ -21,7 +21,9 @@ public class DefaultAuto implements AutoMode {
 	boolean runSecondHalf = true;
 	final static int SECOND_HALF_START = 5;
 	final static int ONTARGET_THRESHOLD = 10; // the minimum number of loops on target required to move to the next stage
-
+	final static double TURN_PRECISION = 6;		//threshold for counting it as on target (degrees)
+	final static double LONG_DISTANCE_PRECISION = 4;	//threshold for counting it as on target (inches)
+	final static double SHORT_DISTANCE_PRECISION = 0.5;	//threshold for counting it as on target (inches)
 
 
 	public DefaultAuto(Robot myBot) {
@@ -86,7 +88,7 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 			}
 
-			if (Math.abs(myBot.myGyro.getAngle() - 90) < 6)
+			if (Math.abs(myBot.myGyro.getAngle() - 90) < TURN_PRECISION)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -115,7 +117,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 81) < 4) && (Math.abs(l - (-81)) < 4))
+			if ((Math.abs(r - 81) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-81)) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -137,7 +139,7 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 			}
 
-			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < 6)
+			if (Math.abs(myBot.myGyro.getAngle() - (-90)) < TURN_PRECISION)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -167,7 +169,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (Math.PI)) < 4) && (Math.abs(l - (-Math.PI)) < 4))
+			if ((Math.abs(r - (Math.PI)) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-Math.PI)) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -239,7 +241,7 @@ public class DefaultAuto implements AutoMode {
 
 			}
 
-			if (Math.abs(myBot.myGyro.getAngle() - 90) < 6)
+			if (Math.abs(myBot.myGyro.getAngle() - 90) < TURN_PRECISION)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -268,7 +270,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 71) < 4) && (Math.abs(l - (-71)) < 4))
+			if ((Math.abs(r - 71) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-71)) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -290,7 +292,7 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 			}
 
-			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < 6)
+			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < TURN_PRECISION)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -318,7 +320,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (10*Math.sqrt(2))) < 4) && (Math.abs(l - (-10*Math.sqrt(2))) < 4))
+			if ((Math.abs(r - (10*Math.sqrt(2))) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-10*Math.sqrt(2))) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -340,7 +342,7 @@ public class DefaultAuto implements AutoMode {
 				ontarget = 0;
 			}
 
-			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < 6)
+			if (Math.abs(myBot.myGyro.getAngle() - (-45)) < TURN_PRECISION)
 				ontarget++;
 			else
 				ontarget = 0;
@@ -370,7 +372,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 134) < 4) && (Math.abs(l - (-134)) < 4))
+			if ((Math.abs(r - 134) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-134)) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -414,7 +416,7 @@ public class DefaultAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (-Math.PI)) < 4) && (Math.abs(l - (Math.PI)) < 4))
+			if ((Math.abs(r - (-Math.PI)) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (Math.PI)) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
