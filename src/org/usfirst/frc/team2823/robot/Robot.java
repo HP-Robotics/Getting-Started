@@ -164,7 +164,7 @@ public class Robot extends IterativeRobot {
 		leftDrivingControl = new PIDController(0.06, 0.01 / 1000, 0.30,
 				new DriveInchesEncoder(leftEncoder), new PIDOutputClamp(
 						new RightDrivePIDOutput(), 0.5));
-		rightDrivingControl = new PIDController(0.06, 0.0, 0.30,
+		rightDrivingControl = new PIDController(0.06, 0.01 / 1000, 0.30,
 				new DriveInchesEncoder(rightEncoder), new PIDOutputClamp(
 						new LeftDrivePIDOutput(), 0.5));
 
