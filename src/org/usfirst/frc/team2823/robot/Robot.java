@@ -190,8 +190,8 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Elevator Velocity", elevatorVelocity);
 		autoChooser = new SendableChooser();
 		autoChooser.addDefault("Default: 2 Totes", new DefaultAuto(this));
-		autoChooser.addObject("Alternate: Move 72 inches", new AlternateAuto(
-				this));
+		autoChooser.addObject("Alternate: Move 144 inches", new AlternateAuto(this));
+		autoChooser.addObject("Alternate: Three Tote Auto", new ThreeToteAuto(this));
 		autoChooser.addObject("Empty: Do Nothing", new EmptyAuto());
 		SmartDashboard.putData("Autonomous Mode", autoChooser);
 
