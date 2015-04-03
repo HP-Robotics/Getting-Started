@@ -10,9 +10,9 @@ import edu.wpi.first.wpilibj.Timer;
 public class DefaultAuto implements AutoMode {
 	Robot myBot;
 
-	double[] stageTimeouts = { 0.1, 0.8, 2.0, 2.0, 2.0, 3.5,5.0}; // total 20.3, used 0.5 for stage 13
+	double[] stageTimeouts = { 0.1, 0.8, 2.0, 2.0, 2.0, 3.5, 5.0, 2.0}; // total 20.3, used 0.5 for stage 13
 	//lift, back, turn, drive 74, turn, drive pi, lift, drive -pi, turn, drive 74, turn, drive 10*sqrt(2), turn, drive 5, drive -1, drop, drive 130, drive -1, lift
-	int[] stageCounts = new int[7];
+	int[] stageCounts = new int[8];
 	int ontarget;
 	int stage = 0;
 	Timer tick;
@@ -209,7 +209,7 @@ public class DefaultAuto implements AutoMode {
 				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
 			}
 			
-			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 22.7) {
+			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 15.0) {
 				nextStage();
 			}
 		}
@@ -240,6 +240,20 @@ public class DefaultAuto implements AutoMode {
 			if (ontarget > ONTARGET_THRESHOLD) {
 				myBot.rightDrivingControl.disable();
 				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+		}
+		
+		// move elevator to 20 inches
+		if (stage == 7) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorControl.setSetpoint(20);
+				myBot.elevatorIndex = -1;
+				LEDSignboard.sendTextMessage("RELEASE! ");
+			}
+			
+			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) > 19.9) {
 				nextStage();
 			}
 		}

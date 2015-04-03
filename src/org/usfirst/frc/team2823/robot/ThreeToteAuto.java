@@ -25,7 +25,8 @@ public class ThreeToteAuto implements AutoMode {
 	final static double LONG_DISTANCE_PRECISION = 3;	//threshold for counting it as on target (inches)
 	final static double SHORT_DISTANCE_PRECISION = 1.0;	//threshold for counting it as on target (inches)
     final static double ANGLE_TO_TURN_TO = 90.0; // Target angle
-    final static int BACK_UP_DISTANCE = 4;
+    final static int BACK_UP_DISTANCE = 4; 
+    //JPW TODO - I suggest back up 5, and drop threshold to 5
 
 	public ThreeToteAuto(Robot myBot) {
 		this.myBot = myBot;
@@ -194,9 +195,9 @@ public class ThreeToteAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-8);
+				myBot.leftDrivingControl.setSetpoint(-12);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(8);
+				myBot.rightDrivingControl.setSetpoint(12);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("DONE!");
@@ -206,7 +207,7 @@ public class ThreeToteAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (8)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (-8)) < SHORT_DISTANCE_PRECISION))
+			if ((Math.abs(r - (12)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (-12)) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -220,7 +221,6 @@ public class ThreeToteAuto implements AutoMode {
 		}
 
 		// lift
-		//TODO: Maybe delay .1 sec to allow tote to load
 		if (stage == 6) {
 			if (stageCounts[stage] == 0) {
 				myBot.elevatorControl.enable();
@@ -234,9 +234,9 @@ public class ThreeToteAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(8+BACK_UP_DISTANCE);
+				myBot.leftDrivingControl.setSetpoint(12+BACK_UP_DISTANCE);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(-8-BACK_UP_DISTANCE);
+				myBot.rightDrivingControl.setSetpoint(-12-BACK_UP_DISTANCE);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("DONE!");
@@ -246,7 +246,7 @@ public class ThreeToteAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (-8-BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (8+BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION))
+			if ((Math.abs(r - (-12-BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (12+BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -278,7 +278,7 @@ public class ThreeToteAuto implements AutoMode {
 			if (ontarget > ONTARGET_THRESHOLD) {
 				myBot.turningControl.disable();
 				nextStage();
-				return;//TODO: remove this
+				return;//TODO: remove this (only if done testing separately)
 			}
 
 		}
@@ -357,9 +357,9 @@ public class ThreeToteAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(-130);
+				myBot.leftDrivingControl.setSetpoint(-144);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(130);
+				myBot.rightDrivingControl.setSetpoint(144);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("**GO! GO! GOOOOOOOOOOO!");
@@ -369,7 +369,7 @@ public class ThreeToteAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - 134) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-134)) < LONG_DISTANCE_PRECISION))
+			if ((Math.abs(r - 144) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-144)) < LONG_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
@@ -387,9 +387,9 @@ public class ThreeToteAuto implements AutoMode {
 			if (stageCounts[stage] == 0) {
 				myBot.leftEncoder.reset();
 				myBot.rightEncoder.reset();
-				myBot.leftDrivingControl.setSetpoint(1);
+				myBot.leftDrivingControl.setSetpoint(3);
 				myBot.leftDrivingControl.enable();
-				myBot.rightDrivingControl.setSetpoint(-1);
+				myBot.rightDrivingControl.setSetpoint(-3);
 				myBot.rightDrivingControl.enable();
 				ontarget = 0;
 				LEDSignboard.sendTextMessage("DISENGAGE...");
@@ -399,7 +399,7 @@ public class ThreeToteAuto implements AutoMode {
 			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
 			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
 
-			if ((Math.abs(r - (-1)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (1)) < SHORT_DISTANCE_PRECISION))
+			if ((Math.abs(r - (-3)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (3)) < SHORT_DISTANCE_PRECISION))
 				ontarget++;
 			else
 				ontarget = 0;
