@@ -1,0 +1,677 @@
+package org.usfirst.frc.team2823.robot;
+
+import org.usfirst.frc.team2823.robot.Robot.ShimmyMode;
+
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+
+// total 1: 7.628
+// total 2: 
+public class TwoToteAuto implements AutoMode {
+	Robot myBot;
+
+	double[] stageTimeouts = { 2.0, 1.0, 0.8, 1.5, 0.8, 1.5, 2.0, 1.5, 1.5, 1.5, 2.0 }; // total 20.3, used 0.5 for stage 13
+	//lift, back, turn, drive 74, turn, drive pi, lift, drive -pi, turn, drive 74, turn, drive 10*sqrt(2), turn, drive 5, drive -1, drop, drive 130, drive -1, lift
+	int[] stageCounts = new int[11];
+	int ontarget;
+	int stage = 0;
+	Timer tick;
+	int stageLast = 0;
+	boolean runFirstHalf = true;
+	boolean runSecondHalf = true;
+	final static int SECOND_HALF_START = 8;
+	final static int ONTARGET_THRESHOLD = 10; // the minimum number of loops on target required to move to the next stage
+	final static double TURN_PRECISION = 2;		//threshold for counting it as on target (degrees)
+	final static double LONG_DISTANCE_PRECISION = 3;	//threshold for counting it as on target (inches)
+	final static double SHORT_DISTANCE_PRECISION = 1.0;	//threshold for counting it as on target (inches)
+    final static double ANGLE_TO_TURN_TO = 93.0; // Target angle
+    final static int BACK_UP_DISTANCE = 4; 
+    
+    final static double T1D = 28;
+    final static double T2D = 20;
+    final static double BACK_DISTANCE = 41;
+    final static double PLATFORM_DISTANCE = 46;
+    
+    //NEW CONSTANTS
+    
+    
+    //JPW TODO - I suggest back up 5, and drop threshold to 5
+
+	public TwoToteAuto(Robot myBot) {
+		this.myBot = myBot;
+	}
+
+	public void autoInit() {
+		
+		tick = new Timer();
+		tick.reset();
+		tick.start();
+		
+		if(runSecondHalf)
+		{
+			stage = SECOND_HALF_START;
+		}
+		if(runFirstHalf)
+		{
+			stage = 0;
+		}
+
+		for (int i = 0; i < stageCounts.length; i++)
+			stageCounts[i] = 0;
+
+		System.out.println("Hey, you chose the alternate autonomous mode. Good job!");
+	}
+
+	public void autoPeriodic() {
+
+		if (stage < 0 || stage >= stageCounts.length)
+			return;
+		
+		if((runFirstHalf == true) && (runSecondHalf == false) && (stage >= SECOND_HALF_START))
+			return;
+
+		if (tick.get() > stageTimeouts[stage]) {
+
+			System.out.printf("stage %d timed out\n", stage);
+
+			myBot.disableAllPIDControllers();
+			myBot.elevatorControl.enable();
+			nextStage();
+			return;
+		}
+		
+		// turn right 90 degrees
+		if (stage == 0) {
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				LEDSignboard.sendTextMessage("!");
+				myBot.turningControl.setSetpoint(90);
+				myBot.turningControl.enable();
+				ontarget = 0;
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - (90)) < TURN_PRECISION)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.turningControl.disable();
+				nextStage();
+			}
+		}
+		
+		// drive forward T1D inches
+		if (stage == 1) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-T1D);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(T1D);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - T1D) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-T1D)) < LONG_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		if (stage == 2) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorUp();
+				LEDSignboard.sendTextMessage("TOTES MA GOATS");
+
+			}
+		}
+		
+		// drive forward T2D inches
+		if (stage == 3) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-T2D);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(T2D);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - T2D) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-T2D)) < LONG_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		if (stage == 4) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorUp();
+				LEDSignboard.sendTextMessage("TOTESTOTESTOTES!!!");
+
+			}
+		}
+		
+		if (stage == 5) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(BACK_DISTANCE);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-BACK_DISTANCE);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-BACK_DISTANCE)) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (BACK_DISTANCE)) < LONG_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		// turn left 90 degrees
+		if (stage == 6) {
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(-88);
+				myBot.turningControl.enable();
+				ontarget = 0;
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - (-88)) < TURN_PRECISION)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.turningControl.disable();
+				nextStage();
+			}
+		}
+		
+		// drive to the scoring platform
+		if (stage == 7) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-PLATFORM_DISTANCE);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(PLATFORM_DISTANCE);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - PLATFORM_DISTANCE) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (-PLATFORM_DISTANCE)) < SHORT_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		// drop totes
+		if (stage == 8) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorControl.setSetpoint(19.75);
+				myBot.elevatorIndex = -1;
+				LEDSignboard.sendTextMessage(" ANCHORS AWAY! ");
+			}
+			
+			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 19.8) {
+				nextStage();
+			}
+		}
+		
+		if (stage == 9) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(PLATFORM_DISTANCE);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-PLATFORM_DISTANCE);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-PLATFORM_DISTANCE)) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (PLATFORM_DISTANCE)) < LONG_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		if (stage == 10) {
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(90);
+				myBot.turningControl.enable();
+				ontarget = 0;
+			}
+		}
+		/*
+		// pick up a tote
+		if (stage == 0) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorUp();
+				LEDSignboard.sendTextMessage("* #TEAM20POINTAUTO");
+
+			}
+		}
+
+		// back up
+		
+		if (stage == 1){
+			
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(BACK_UP_DISTANCE);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-BACK_UP_DISTANCE);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+				
+			}
+
+		}
+		
+		
+			
+		// turn right 
+		if (stage == 2) {
+			myBot.elevatorControl.enable();
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(ANGLE_TO_TURN_TO);
+				myBot.turningControl.enable();
+				ontarget = 0;
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - ANGLE_TO_TURN_TO) < TURN_PRECISION)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.turningControl.disable();
+				nextStage();
+				return;
+			}
+
+		}
+	
+
+		// drive forward 81 inches
+		if (stage == 3) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-81);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(81);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - 81) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-81)) < LONG_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+
+		// turn left 90 degrees
+		if (stage == 4) {
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(-ANGLE_TO_TURN_TO);
+				myBot.turningControl.enable();
+				ontarget = 0;
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - (-ANGLE_TO_TURN_TO)) < TURN_PRECISION)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.turningControl.disable();
+				nextStage();
+			}
+
+		}
+
+		// drive forward 
+		if (stage == 5) {
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-16);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(16);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("DONE!");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (16)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (-16)) < SHORT_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+
+		// lift
+		if (stage == 6) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorUp();
+				LEDSignboard.sendTextMessage("INSTANT MESSAGE... YOU'LL NEVER READ THIS PART!");
+			}
+		}
+		
+		// drive back 
+		if (stage == 7) {
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(16+BACK_UP_DISTANCE);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-16-BACK_UP_DISTANCE);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("DONE!");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-16-BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (16+BACK_UP_DISTANCE)) < SHORT_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		// turn right 90 degrees
+		if (stage == 8) {
+			myBot.elevatorControl.enable();
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(ANGLE_TO_TURN_TO);
+				myBot.turningControl.enable();
+				ontarget = 0;
+
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - ANGLE_TO_TURN_TO) < TURN_PRECISION)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.turningControl.disable();
+				nextStage();
+				return;//TODO: remove this (only if done testing separately)
+			}
+
+		}
+		
+		// drive forward 74 inches
+		if (stage == 9) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-74);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(74);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - 74) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-74)) < LONG_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+
+		// turn left 90 degrees
+		if (stage == 10) {
+			if (stageCounts[stage] == 0) {
+				myBot.myGyro.reset();
+				myBot.turningControl.setSetpoint(-87);
+				myBot.turningControl.enable();
+				ontarget = 0;
+			}
+
+			if (Math.abs(myBot.myGyro.getAngle() - (-87)) < TURN_PRECISION)
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.turningControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		
+
+		
+		// drop totes
+		if (stage == 11) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorControl.setSetpoint(22.6);
+				myBot.elevatorIndex = -1;
+				LEDSignboard.sendTextMessage("ANCHORS AWAY! ");
+			}
+			
+			if (myBot.encoderToInches(myBot.elevatorEncoder.get()) < 22.7) {
+				nextStage();
+			}
+		}
+		
+		// drive forward 130 inches
+		if (stage == 12) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(-144);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(144);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("**GO! GO! GOOOOOOOOOOO!");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - 144) < LONG_DISTANCE_PRECISION) && (Math.abs(l - (-144)) < LONG_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+		}
+		
+		// drive back 1 inch
+		if (stage == 13) {
+
+			if (stageCounts[stage] == 0) {
+				myBot.leftEncoder.reset();
+				myBot.rightEncoder.reset();
+				myBot.leftDrivingControl.setSetpoint(3);
+				myBot.leftDrivingControl.enable();
+				myBot.rightDrivingControl.setSetpoint(-3);
+				myBot.rightDrivingControl.enable();
+				ontarget = 0;
+				LEDSignboard.sendTextMessage("DISENGAGE...");
+
+			}
+
+			double l = myBot.driveEncoderToInches(myBot.leftEncoder.get());
+			double r = myBot.driveEncoderToInches(myBot.rightEncoder.get());
+
+			if ((Math.abs(r - (-3)) < SHORT_DISTANCE_PRECISION) && (Math.abs(l - (3)) < SHORT_DISTANCE_PRECISION))
+				ontarget++;
+			else
+				ontarget = 0;
+
+			if (ontarget > ONTARGET_THRESHOLD) {
+				myBot.rightDrivingControl.disable();
+				myBot.leftDrivingControl.disable();
+				nextStage();
+			}
+
+		}
+		
+		if (stage == 14) {
+			if (stageCounts[stage] == 0) {
+				myBot.elevatorControl.enable();
+				myBot.elevatorUp();
+				myBot.elevatorUp();
+				LEDSignboard.sendTextMessage("!");
+			}
+		}
+		
+		*/
+
+		if(stage < stageCounts.length) {
+			stageCounts[stage]++;
+		}
+
+	}
+
+	public void nextStage()
+	{
+		System.out.printf("Stage Finished: %d\tTime: %f\tTotal Time:%f\n",stage,tick.get(),DriverStation.getInstance().getMatchTime());
+		tick.reset();
+		stage++;
+	}
+
+}
