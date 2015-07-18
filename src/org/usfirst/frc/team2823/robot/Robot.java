@@ -329,9 +329,9 @@ public class Robot extends IterativeRobot {
 			}
 			double slowLift = 3.3;
 			if (stick.getRawButton(2)) {
-				slowLift = 1.0;
-			} else {
 				slowLift = 3.3;
+			} else {
+				slowLift = 1.0;
 			}
 			// ***** RAW ELEVATOR CONTROL *****
 			if (stick.getRawButton(5)) {
@@ -442,7 +442,12 @@ public class Robot extends IterativeRobot {
 
 			if (!leftIRControl.isEnable() && !turningControl.isEnable()
 					&& !leftDrivingControl.isEnable()) {
-				driveRobot(axis1 * MAX_DRIVE_SPEED, axis3 * MAX_DRIVE_SPEED);
+				double turnCap = Math.abs(axis1 - axis3);
+				if (turnCap > 1) {
+					driveRobot(axis1 * MAX_DRIVE_SPEED / (turnCap / 1.5), axis3 * MAX_DRIVE_SPEED / (turnCap / 1.5));
+				} else {
+					driveRobot(axis1 * MAX_DRIVE_SPEED, axis3 * MAX_DRIVE_SPEED);
+				}
 			}
 		}
 
@@ -462,6 +467,7 @@ public class Robot extends IterativeRobot {
 		rightEncoder.reset();
 		turningControl.disable();
 		LiveWindow.setEnabled(false);
+		System.out.println("HI!");
 	}
 
 	public void testPeriodic() {
@@ -514,6 +520,7 @@ public class Robot extends IterativeRobot {
 			talon4.set(-leftaxis);
 
 		}
+		
 
 	}
 
