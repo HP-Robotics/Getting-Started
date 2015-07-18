@@ -153,6 +153,7 @@ public class Robot extends IterativeRobot {
 		elevatorControl = new PIDController(0.4, 0.0, 0.0, new InchesEncoder(
 				elevatorEncoder), new SwitchOverride(new PIDOutputClamp(victor,
 				1.0)));
+		//elevatorControl.startCSV("elevatorpid.csv");
 		slowElevatorControl = new PIDController(0.4, 0.0, 0.0,
 				new InchesEncoder(elevatorEncoder), new SwitchOverride(
 						new PIDOutputClamp(victor, 0.7)));
@@ -219,7 +220,7 @@ public class Robot extends IterativeRobot {
 		autoLoopCounter = 0;
 		myGyro.reset();
 		myDriveDistance = SmartDashboard.getNumber("Auto Distance");
-		((AutoMode) autoChooser.getSelected()).autoInit();
+		//((AutoMode) autoChooser.getSelected()).autoInit();
 		LEDSignboard
 				.sendTextMessage("Initializing global domination routine...");
 		updateShimmyConstants();
@@ -229,7 +230,7 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during autonomous
 	 */
 	public void autonomousPeriodic() {
-		((AutoMode) autoChooser.getSelected()).autoPeriodic();
+		//((AutoMode) autoChooser.getSelected()).autoPeriodic();
 	}
 
 	/**
