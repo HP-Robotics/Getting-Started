@@ -1,7 +1,5 @@
 package org.usfirst.frc.team2823.robot;
 
-import org.usfirst.frc.team2823.robot.Robot.ShimmyMode;
-
 import edu.wpi.first.wpilibj.Timer;
 
 // total 1: 7.628
