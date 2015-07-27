@@ -45,3 +45,4 @@ Temporary Items
 *.class
 *.jar
 bin/org/usfirst/frc/team2823/robot/Robot.class
+sysProps.xml
